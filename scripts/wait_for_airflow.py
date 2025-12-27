@@ -41,7 +41,7 @@ def check_airflow_ready(url: str = "http://localhost:8080/health", timeout: int 
 
 def wait_for_airflow(
     url: str = "http://localhost:8080/health",
-    max_wait: int = 300,
+    max_wait: int = 400,
     interval: int = 5,
     verbose: bool = True
 ) -> bool:
