@@ -199,12 +199,51 @@ class SQLToPandasConverter:
         
         return "\n".join(all_operations)
     
+    def _extract_ctes(self, ast: exp.Expression) -> List[Dict[str, Any]]:
+        """Extract CTEs (WITH clauses) from AST."""
+        ctes = []
+        
+        # Check if the root expression is a With expression
+        if isinstance(ast, exp.With):
+            for cte in ast.expressions:
+                if isinstance(cte, exp.CTE):
+                    cte_info = {
+                        'name': cte.alias,
+                        'query': cte.this
+                    }
+                    ctes.append(cte_info)
+        
+        # Also check for With in nested queries
+        for node in ast.walk():
+            if isinstance(node, exp.With):
+                for cte in node.expressions:
+                    if isinstance(cte, exp.CTE):
+                        cte_info = {
+                            'name': cte.alias,
+                            'query': cte.this
+                        }
+                        # Avoid duplicates
+                        if not any(c['name'] == cte_info['name'] for c in ctes):
+                            ctes.append(cte_info)
+        
+        return ctes
+    
     def _extract_select(self, ast: exp.Expression) -> List[exp.Expression]:
         """Extract SELECT expressions from AST."""
         selects = []
-        for node in ast.walk():
-            if isinstance(node, exp.Select):
-                selects.extend(node.expressions)
+        
+        # Handle With expressions - extract the main query
+        if isinstance(ast, exp.With):
+            # Get the main query (usually a Select)
+            main_query = ast.this
+            if isinstance(main_query, exp.Select):
+                selects.extend(main_query.expressions)
+        else:
+            # Regular Select
+            for node in ast.walk():
+                if isinstance(node, exp.Select):
+                    selects.extend(node.expressions)
+        
         return selects
     
     def _extract_from(self, ast: exp.Expression) -> Optional[str]:
