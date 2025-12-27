@@ -64,18 +64,62 @@ class AtlasClient(LoggingMixin):
             return
         
         try:
+            # Atlas v2 API uses /api/atlas/v2/entity/bulk for batch operations
+            # But single entity endpoint is /api/atlas/v2/entity
             url = f"{self.base_url}/api/atlas/v2/entity"
-            self.log_info(f"Publishing to Atlas", url=url, entity_count=len(payload.get("entities", [])))
+            entity_count = len(payload.get("entities", []))
+            self.log_info(f"Publishing to Atlas", url=url, entity_count=entity_count)
+            
+            # Try without auth first (some Atlas setups don't require it)
+            headers = {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
             
             response = requests.post(
                 url,
                 json=payload,
-                timeout=5,
+                timeout=10,
+                headers=headers
             )
+            
+            # Check for authentication errors
+            if response.status_code == 401:
+                # Try with default credentials (admin/admin)
+                self.log_info("Atlas requires authentication, retrying with admin/admin")
+                response = requests.post(
+                    url,
+                    json=payload,
+                    timeout=10,
+                    headers=headers,
+                    auth=("admin", "admin")
+                )
+            
+            # Log response details for debugging
+            if response.status_code != 200:
+                self.log_warning(
+                    f"Atlas returned non-200 status",
+                    status_code=response.status_code,
+                    response_text=response.text[:200]
+                )
+            
             response.raise_for_status()
             
-            self.log_info("Atlas metadata published successfully")
+            self.log_info("Atlas metadata published successfully", entity_count=entity_count)
         except requests.exceptions.RequestException as e:
-            self.log_warning(f"Atlas publish failed", error=str(e), url=url)
+            # Don't fail the pipeline if Atlas publish fails - just log warning
+            status_code = None
+            response_text = None
+            if hasattr(e, 'response') and e.response is not None:
+                status_code = e.response.status_code
+                response_text = e.response.text[:200] if e.response.text else None
+            
+            self.log_warning(
+                f"Atlas publish failed (this is non-critical)",
+                error=str(e),
+                url=url,
+                status_code=status_code,
+                response_text=response_text
+            )
         except Exception as e:
             self.log_error(f"Unexpected error publishing to Atlas", error=e, exc_info=True)

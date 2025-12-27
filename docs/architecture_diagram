@@ -1,0 +1,105 @@
+// Ringmaster Pipelines Architecture
+digraph {
+	dpi=300 rankdir=TB size="16,12"
+	node [fontname=Arial shape=box style="rounded,filled"]
+	edge [fontname=Arial fontsize=10]
+	subgraph cluster_data {
+		color=lightgray fillcolor="#E0F2F1" label="Data Sources & Storage" style=filled
+		raw_json [label="Raw JSON Files
+(data/)" fillcolor="#E0F2F1"]
+		warehouse [label="Warehouse DB
+(SQLite/PostgreSQL)" fillcolor="#E0F2F1"]
+		bronze [label="Bronze Tables
+(raw data)" fillcolor="#E0F2F1"]
+		silver [label="Silver Tables
+(processed)" fillcolor="#E0F2F1"]
+		gold [label="Gold Tables
+(aggregated)" fillcolor="#E0F2F1"]
+	}
+	subgraph cluster_domain {
+		color=lightblue fillcolor="#E8F4F8" label="Domain Layer (Business Logic)" style=filled
+		claim_model [label="Claim
+(Dataclass)" fillcolor="#E8F4F8"]
+		policy_model [label="Policy
+(Dataclass)" fillcolor="#E8F4F8"]
+		claims_processor [label="ClaimsProcessor
+(Business Rules)" fillcolor="#E8F4F8"]
+		policies_processor [label="PoliciesProcessor
+(Business Rules)" fillcolor="#E8F4F8"]
+		aggregations [label="Aggregators
+(Centralized Rules)" fillcolor="#E8F4F8"]
+	}
+	subgraph cluster_transform {
+		color=orange fillcolor="#FFF4E6" label="Transform Layer (Data Processing)" style=filled
+		bronze_step [label="BronzeStep
+(Ingestion)" fillcolor="#FFF4E6"]
+		silver_step [label="SilverStep
+(Transformation)" fillcolor="#FFF4E6"]
+		gold_step [label="GoldStep
+(Aggregation)" fillcolor="#FFF4E6"]
+		validation_step [label="ValidationStep
+(Quality Checks)" fillcolor="#FFF4E6"]
+	}
+	subgraph cluster_pipeline {
+		color=green fillcolor="#E8F5E9" label="Pipeline Layer (Orchestration)" style=filled
+		base_pipeline [label="BasePipeline
+(Core Orchestration)" fillcolor="#E8F5E9"]
+		pipeline_step [label="PipelineStep
+(Base Class)" fillcolor="#E8F5E9"]
+		claims_pipeline [label="ClaimsPipeline
+(Claims Workflow)" fillcolor="#E8F5E9"]
+		policies_pipeline [label="PoliciesPipeline
+(Policies Workflow)" fillcolor="#E8F5E9"]
+		config_loader [label="ConfigLoader
+(YAML → Pipeline)" fillcolor="#E8F5E9"]
+	}
+	subgraph cluster_sdk {
+		color=purple fillcolor="#F3E5F5" label="SDK Layer (Analyst Interfaces)" style=filled
+		claims_analyst [label="ClaimsAnalyst
+(Analyst Interface)" fillcolor="#F3E5F5"]
+		policies_analyst [label="PoliciesAnalyst
+(Analyst Interface)" fillcolor="#F3E5F5"]
+		stoploss_analyst [label="StopLossAnalyst
+(Combined Analysis)" fillcolor="#F3E5F5"]
+	}
+	subgraph cluster_utils {
+		color=pink fillcolor="#FCE4EC" label="Utilities Layer (Infrastructure)" style=filled
+		database [label="DatabaseManager
+(SQL Operations)" fillcolor="#FCE4EC"]
+		atlas [label="AtlasClient
+(Metadata Publishing)" fillcolor="#FCE4EC"]
+		logging [label="LoggingMixin
+(Structured Logging)" fillcolor="#FCE4EC"]
+		metrics [label="MetricsMixin
+(Performance Metrics)" fillcolor="#FCE4EC"]
+	}
+	raw_json -> bronze_step [label=Load style=dashed]
+	bronze_step -> bronze [label=Write]
+	bronze -> silver_step [label=Read]
+	silver_step -> silver [label=Write]
+	silver -> gold_step [label=Read]
+	gold_step -> gold [label=Write]
+	bronze_step -> claim_model [label=Parse style=dotted]
+	claim_model -> claims_processor [label=Process]
+	claims_processor -> silver_step [label="Apply Rules"]
+	silver_step -> aggregations [label=Aggregate]
+	aggregations -> gold_step [label="Use Rules"]
+	config_loader -> base_pipeline [label=Creates]
+	base_pipeline -> pipeline_step [label=Orchestrates]
+	pipeline_step -> bronze_step [label=Executes]
+	pipeline_step -> silver_step [label=Executes]
+	pipeline_step -> gold_step [label=Executes]
+	pipeline_step -> validation_step [label=Executes]
+	base_pipeline -> claims_pipeline [label=Inherits]
+	base_pipeline -> policies_pipeline [label=Inherits]
+	claims_analyst -> database [label=Queries style=dashed]
+	claims_analyst -> aggregations [label="Uses Rules"]
+	policies_analyst -> database [label=Queries style=dashed]
+	policies_analyst -> aggregations [label="Uses Rules"]
+	stoploss_analyst -> claims_analyst [label=Composes]
+	stoploss_analyst -> policies_analyst [label=Composes]
+	base_pipeline -> logging [label=Uses style=dotted]
+	base_pipeline -> metrics [label=Uses style=dotted]
+	base_pipeline -> atlas [label=Publishes style=dotted]
+	database -> warehouse [label=Manages]
+}

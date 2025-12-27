@@ -1,0 +1,92 @@
+graph TB
+    subgraph Data["Data Sources & Storage"]
+        RawJSON["Raw JSON Files<br/>(data/)"]
+        Warehouse["Warehouse DB<br/>(SQLite/PostgreSQL)"]
+        Bronze["Bronze Tables<br/>(raw data)"]
+        Silver["Silver Tables<br/>(processed)"]
+        Gold["Gold Tables<br/>(aggregated)"]
+    end
+    
+    subgraph Domain["Domain Layer (Business Logic)"]
+        ClaimModel["Claim<br/>(Dataclass)"]
+        PolicyModel["Policy<br/>(Dataclass)"]
+        ClaimsProcessor["ClaimsProcessor<br/>(Business Rules)"]
+        PoliciesProcessor["PoliciesProcessor<br/>(Business Rules)"]
+        Aggregations["Aggregators<br/>(Centralized Rules)"]
+    end
+    
+    subgraph Transform["Transform Layer (Data Processing)"]
+        BronzeStep["BronzeStep<br/>(Ingestion)"]
+        SilverStep["SilverStep<br/>(Transformation)"]
+        GoldStep["GoldStep<br/>(Aggregation)"]
+        ValidationStep["ValidationStep<br/>(Quality Checks)"]
+    end
+    
+    subgraph Pipeline["Pipeline Layer (Orchestration)"]
+        BasePipeline["BasePipeline<br/>(Core Orchestration)"]
+        PipelineStep["PipelineStep<br/>(Base Class)"]
+        ClaimsPipeline["ClaimsPipeline<br/>(Claims Workflow)"]
+        PoliciesPipeline["PoliciesPipeline<br/>(Policies Workflow)"]
+        ConfigLoader["ConfigLoader<br/>(YAML → Pipeline)"]
+    end
+    
+    subgraph SDK["SDK Layer (Analyst Interfaces)"]
+        ClaimsAnalyst["ClaimsAnalyst<br/>(Analyst Interface)"]
+        PoliciesAnalyst["PoliciesAnalyst<br/>(Analyst Interface)"]
+        StopLossAnalyst["StopLossAnalyst<br/>(Combined Analysis)"]
+    end
+    
+    subgraph Utils["Utilities Layer (Infrastructure)"]
+        Database["DatabaseManager<br/>(SQL Operations)"]
+        Atlas["AtlasClient<br/>(Metadata Publishing)"]
+        Logging["LoggingMixin<br/>(Structured Logging)"]
+        Metrics["MetricsMixin<br/>(Performance Metrics)"]
+    end
+    
+    %% Data Flow
+    RawJSON -->|Load| BronzeStep
+    BronzeStep -->|Write| Bronze
+    Bronze -->|Read| SilverStep
+    SilverStep -->|Write| Silver
+    Silver -->|Read| GoldStep
+    GoldStep -->|Write| Gold
+    
+    %% Domain Logic
+    BronzeStep -.->|Parse| ClaimModel
+    ClaimModel --> ClaimsProcessor
+    ClaimsProcessor --> SilverStep
+    SilverStep --> Aggregations
+    Aggregations --> GoldStep
+    
+    %% Pipeline Orchestration
+    ConfigLoader --> BasePipeline
+    BasePipeline --> PipelineStep
+    PipelineStep --> BronzeStep
+    PipelineStep --> SilverStep
+    PipelineStep --> GoldStep
+    PipelineStep --> ValidationStep
+    BasePipeline --> ClaimsPipeline
+    BasePipeline --> PoliciesPipeline
+    
+    %% SDK Access
+    ClaimsAnalyst -.->|Queries| Database
+    ClaimsAnalyst --> Aggregations
+    PoliciesAnalyst -.->|Queries| Database
+    PoliciesAnalyst --> Aggregations
+    StopLossAnalyst --> ClaimsAnalyst
+    StopLossAnalyst --> PoliciesAnalyst
+    
+    %% Infrastructure
+    BasePipeline -.-> Logging
+    BasePipeline -.-> Metrics
+    BasePipeline -.-> Atlas
+    Database --> Warehouse
+    
+    style Data fill:#E0F2F1
+    style Domain fill:#E8F4F8
+    style Transform fill:#FFF4E6
+    style Pipeline fill:#E8F5E9
+    style SDK fill:#F3E5F5
+    style Utils fill:#FCE4EC
+
+

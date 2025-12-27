@@ -204,6 +204,39 @@ class PoliciesPipeline(BasePipeline, LoggingMixin, MetricsMixin):
                      steps_failed=summary["steps_failed"],
                      duration_seconds=duration)
         self.record_timing("pipeline_duration", duration)
+        
+        # Publish metadata to Atlas
+        self._publish_atlas_metadata()
+    
+    def _publish_atlas_metadata(self) -> None:
+        """Publish policies metadata to Atlas."""
+        import os
+        from src.utils.atlas import AtlasClient
+        from src.utils.atlas_payloads import build_policies_table_payload, build_policies_aggregates_payload
+        
+        atlas_url = os.getenv("ATLAS_URL", "http://atlas:21000")
+        atlas_enabled = os.getenv("ATLAS_ENABLED", "true").lower() == "true"
+        
+        if not atlas_enabled:
+            self.log_info("Atlas publishing disabled, skipping")
+            return
+        
+        try:
+            client = AtlasClient(base_url=atlas_url, enabled=True)
+            
+            # Publish policies fact table metadata
+            self.log_info("Publishing policies fact table metadata to Atlas")
+            payload = build_policies_table_payload()
+            client.publish(payload)
+            
+            # Publish policies aggregates metadata
+            self.log_info("Publishing policies aggregates metadata to Atlas")
+            payload = build_policies_aggregates_payload()
+            client.publish(payload)
+            
+            self.log_info("Policies metadata published to Atlas successfully")
+        except Exception as e:
+            self.log_warning(f"Failed to publish policies metadata to Atlas", error=e)
     
     def on_error(self, error: Exception) -> None:
         """Hook called when pipeline execution fails."""

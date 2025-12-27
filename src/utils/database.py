@@ -191,12 +191,17 @@ class DatabaseManager(LoggingMixin):
             self.log_info(f"Inserted {len(claims)} claims into silver table")
     
     def insert_claims_gold(self, aggregated: List[Dict[str, Any]]) -> None:
-        """Insert aggregated claims into gold table."""
+        """
+        Insert aggregated claims into gold table.
+        
+        Uses INSERT OR REPLACE to ensure idempotency - running the pipeline
+        multiple times will update existing records rather than creating duplicates.
+        """
         with self.get_connection() as conn:
             cursor = conn.cursor()
             for agg in aggregated:
                 cursor.execute("""
-                    INSERT INTO claims_gold 
+                    INSERT OR REPLACE INTO claims_gold 
                     (policy_id, total_claims, claim_count, avg_claim_amount, 
                      max_claim_amount, min_claim_amount)
                     VALUES (?, ?, ?, ?, ?, ?)
@@ -208,7 +213,7 @@ class DatabaseManager(LoggingMixin):
                     float(agg.get("max_claim_amount", 0)) if agg.get("max_claim_amount") else None,
                     float(agg.get("min_claim_amount", 0)) if agg.get("min_claim_amount") else None
                 ))
-            self.log_info(f"Inserted {len(aggregated)} aggregated claims into gold table")
+            self.log_info(f"Inserted/updated {len(aggregated)} aggregated claims into gold table")
     
     def insert_policies_bronze(self, policies: List[Dict[str, Any]]) -> None:
         """Insert policies into bronze table."""
@@ -259,12 +264,17 @@ class DatabaseManager(LoggingMixin):
             self.log_info(f"Inserted {len(policies)} policies into silver table")
     
     def insert_policies_gold(self, aggregated: List[Dict[str, Any]]) -> None:
-        """Insert aggregated policies into gold table."""
+        """
+        Insert aggregated policies into gold table.
+        
+        Uses INSERT OR REPLACE to ensure idempotency - running the pipeline
+        multiple times will update existing records rather than creating duplicates.
+        """
         with self.get_connection() as conn:
             cursor = conn.cursor()
             for agg in aggregated:
                 cursor.execute("""
-                    INSERT INTO policies_gold 
+                    INSERT OR REPLACE INTO policies_gold 
                     (employer_id, total_coverage, policy_count, avg_stop_loss_limit)
                     VALUES (?, ?, ?, ?)
                 """, (
@@ -273,7 +283,7 @@ class DatabaseManager(LoggingMixin):
                     int(agg.get("policy_count", 0)),
                     float(agg.get("avg_stop_loss_limit", 0)) if agg.get("avg_stop_loss_limit") else None
                 ))
-            self.log_info(f"Inserted {len(aggregated)} aggregated policies into gold table")
+            self.log_info(f"Inserted/updated {len(aggregated)} aggregated policies into gold table")
     
     def query(self, sql: str, params: Optional[tuple] = None) -> List[Dict[str, Any]]:
         """Execute a query and return results as list of dictionaries."""

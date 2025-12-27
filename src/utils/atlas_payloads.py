@@ -88,20 +88,28 @@ def process_payload(
     Returns:
         Atlas entity dictionary for Process type
     """
+    attrs = {
+        "qualifiedName": qualified_name,
+        "name": name,
+    }
+    
+    # Only include inputs/outputs if they're not empty
+    # Empty lists can cause "null entity" errors in Atlas
+    if inputs:
+        attrs["inputs"] = [
+            {"uniqueAttributes": {"qualifiedName": qn}}
+            for qn in inputs
+        ]
+    
+    if outputs:
+        attrs["outputs"] = [
+            {"uniqueAttributes": {"qualifiedName": qn}}
+            for qn in outputs
+        ]
+    
     return {
         "typeName": "Process",
-        "attributes": {
-            "qualifiedName": qualified_name,
-            "name": name,
-            "inputs": [
-                {"uniqueAttributes": {"qualifiedName": qn}}
-                for qn in inputs
-            ],
-            "outputs": [
-                {"uniqueAttributes": {"qualifiedName": qn}}
-                for qn in outputs
-            ],
-        },
+        "attributes": attrs,
     }
 
 

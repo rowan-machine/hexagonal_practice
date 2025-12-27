@@ -41,6 +41,14 @@ docker-compose up -d
 
 ### 3. Publishing Metadata
 
+**Important**: Metadata must be published to Atlas before it appears in the UI. Atlas shows default entities by default - your entities won't appear until published.
+
+**Quick Publish (Recommended)**:
+```bash
+python publish_atlas_metadata.py
+```
+
+**Manual Publishing**:
 ```python
 from src.utils.atlas import AtlasClient
 from src.utils.atlas_payloads import build_policies_table_payload
@@ -55,6 +63,8 @@ client = AtlasClient(
 payload = build_policies_table_payload()
 client.publish(payload)
 ```
+
+**Automatic Publishing**: Metadata is automatically published when pipelines run (if `ATLAS_ENABLED=true`).
 
 ## Viewing Atlas Documentation
 
