@@ -129,6 +129,27 @@ class SQLToPandasConverter:
     ) -> str:
         """Generate pandas code from SQL AST."""
         operations = []
+        cte_operations = []
+        
+        # Process CTEs (WITH clauses) first
+        ctes = self._extract_ctes(ast)
+        if ctes:
+            # Generate code for each CTE
+            for i, cte in enumerate(ctes):
+                cte_name = cte['name']
+                cte_query = cte['query']
+                cte_df_name = f"cte_{cte_name.lower()}"
+                
+                # Recursively convert the CTE query
+                cte_code = self._generate_pandas_code(
+                    cte_query,
+                    source_table,
+                    cte_df_name
+                )
+                cte_operations.append(f"# CTE: {cte_name}")
+                cte_operations.append(cte_code)
+                cte_operations.append(f"{cte_name} = {cte_df_name}  # Alias for CTE")
+                cte_operations.append("")
         
         # Start with DataFrame
         operations.append(f"{df_name} = pd.DataFrame()  # Load from {source_table}")
@@ -138,10 +159,15 @@ class SQLToPandasConverter:
         if select_exprs:
             operations.append(self._generate_select(select_exprs, df_name))
         
-        # Process FROM
+        # Process FROM - check if it references a CTE
         from_table = self._extract_from(ast) or source_table
         if from_table:
-            operations[0] = f"{df_name} = load_dataframe('{from_table}')  # Replace with actual data loading"
+            # Check if FROM references a CTE
+            if ctes and from_table in [cte['name'] for cte in ctes]:
+                # Use the CTE DataFrame
+                operations[0] = f"{df_name} = {from_table}.copy()  # Use CTE"
+            else:
+                operations[0] = f"{df_name} = load_dataframe('{from_table}')  # Replace with actual data loading"
         
         # Process WHERE
         where_expr = self._extract_where(ast)
@@ -168,7 +194,10 @@ class SQLToPandasConverter:
         if limit:
             operations.append(self._generate_limit(limit, df_name))
         
-        return "\n".join(operations)
+        # Combine CTE operations and main query operations
+        all_operations = cte_operations + operations if cte_operations else operations
+        
+        return "\n".join(all_operations)
     
     def _extract_select(self, ast: exp.Expression) -> List[exp.Expression]:
         """Extract SELECT expressions from AST."""
@@ -180,18 +209,44 @@ class SQLToPandasConverter:
     
     def _extract_from(self, ast: exp.Expression) -> Optional[str]:
         """Extract FROM table name."""
-        for node in ast.walk():
-            if isinstance(node, exp.From):
-                for table in node.expressions:
-                    if isinstance(table, exp.Table):
-                        return table.name
+        # Handle With expressions - extract FROM from main query
+        if isinstance(ast, exp.With):
+            main_query = ast.this
+            if isinstance(main_query, exp.Select):
+                for node in main_query.walk():
+                    if isinstance(node, exp.From):
+                        for table in node.expressions:
+                            if isinstance(table, exp.Table):
+                                return table.name
+                            elif isinstance(table, exp.Identifier):
+                                # Could be a CTE reference
+                                return table.name
+        else:
+            # Regular query
+            for node in ast.walk():
+                if isinstance(node, exp.From):
+                    for table in node.expressions:
+                        if isinstance(table, exp.Table):
+                            return table.name
+                        elif isinstance(table, exp.Identifier):
+                            # Could be a CTE reference
+                            return table.name
         return None
     
     def _extract_where(self, ast: exp.Expression) -> Optional[exp.Expression]:
         """Extract WHERE expression."""
-        for node in ast.walk():
-            if isinstance(node, exp.Where):
-                return node.this
+        # Handle With expressions - extract WHERE from main query
+        if isinstance(ast, exp.With):
+            main_query = ast.this
+            if isinstance(main_query, exp.Select):
+                for node in main_query.walk():
+                    if isinstance(node, exp.Where):
+                        return node.this
+        else:
+            # Regular query
+            for node in ast.walk():
+                if isinstance(node, exp.Where):
+                    return node.this
         return None
     
     def _extract_joins(self, ast: exp.Expression) -> List[Dict[str, Any]]:
@@ -215,45 +270,93 @@ class SQLToPandasConverter:
     def _extract_group_by(self, ast: exp.Expression) -> List[str]:
         """Extract GROUP BY columns."""
         group_by = []
-        for node in ast.walk():
-            if isinstance(node, exp.Group):
-                for expr in node.expressions:
-                    if isinstance(expr, exp.Column):
-                        group_by.append(expr.name)
-                    elif isinstance(expr, exp.Identifier):
-                        group_by.append(expr.name)
+        # Handle With expressions - extract GROUP BY from main query
+        if isinstance(ast, exp.With):
+            main_query = ast.this
+            if isinstance(main_query, exp.Select):
+                for node in main_query.walk():
+                    if isinstance(node, exp.Group):
+                        for expr in node.expressions:
+                            if isinstance(expr, exp.Column):
+                                group_by.append(expr.name)
+                            elif isinstance(expr, exp.Identifier):
+                                group_by.append(expr.name)
+        else:
+            # Regular query
+            for node in ast.walk():
+                if isinstance(node, exp.Group):
+                    for expr in node.expressions:
+                        if isinstance(expr, exp.Column):
+                            group_by.append(expr.name)
+                        elif isinstance(expr, exp.Identifier):
+                            group_by.append(expr.name)
         return group_by
     
     def _extract_order_by(self, ast: exp.Expression) -> List[Dict[str, Any]]:
         """Extract ORDER BY expressions."""
         order_by = []
-        for node in ast.walk():
-            if isinstance(node, exp.Order):
-                for expr in node.expressions:
-                    order_info = {
-                        'column': None,
-                        'asc': True
-                    }
-                    if isinstance(expr, exp.Ordered):
-                        if isinstance(expr.this, exp.Column):
-                            order_info['column'] = expr.this.name
-                        elif isinstance(expr.this, exp.Identifier):
-                            order_info['column'] = expr.this.name
-                        order_info['asc'] = expr.args.get('desc', False) is False
-                    elif isinstance(expr, exp.Column):
-                        order_info['column'] = expr.name
-                    order_by.append(order_info)
+        # Handle With expressions - extract ORDER BY from main query
+        if isinstance(ast, exp.With):
+            main_query = ast.this
+            if isinstance(main_query, exp.Select):
+                for node in main_query.walk():
+                    if isinstance(node, exp.Order):
+                        for expr in node.expressions:
+                            order_info = {
+                                'column': None,
+                                'asc': True
+                            }
+                            if isinstance(expr, exp.Ordered):
+                                if isinstance(expr.this, exp.Column):
+                                    order_info['column'] = expr.this.name
+                                elif isinstance(expr.this, exp.Identifier):
+                                    order_info['column'] = expr.this.name
+                                order_info['asc'] = expr.args.get('desc', False) is False
+                            elif isinstance(expr, exp.Column):
+                                order_info['column'] = expr.name
+                            order_by.append(order_info)
+        else:
+            # Regular query
+            for node in ast.walk():
+                if isinstance(node, exp.Order):
+                    for expr in node.expressions:
+                        order_info = {
+                            'column': None,
+                            'asc': True
+                        }
+                        if isinstance(expr, exp.Ordered):
+                            if isinstance(expr.this, exp.Column):
+                                order_info['column'] = expr.this.name
+                            elif isinstance(expr.this, exp.Identifier):
+                                order_info['column'] = expr.this.name
+                            order_info['asc'] = expr.args.get('desc', False) is False
+                        elif isinstance(expr, exp.Column):
+                            order_info['column'] = expr.name
+                        order_by.append(order_info)
         return order_by
     
     def _extract_limit(self, ast: exp.Expression) -> Optional[int]:
         """Extract LIMIT value."""
-        for node in ast.walk():
-            if isinstance(node, exp.Limit):
-                if node.expression:
-                    try:
-                        return int(node.expression.this)
-                    except (AttributeError, ValueError):
-                        pass
+        # Handle With expressions - extract LIMIT from main query
+        if isinstance(ast, exp.With):
+            main_query = ast.this
+            if isinstance(main_query, exp.Select):
+                for node in main_query.walk():
+                    if isinstance(node, exp.Limit):
+                        if node.expression:
+                            try:
+                                return int(node.expression.this)
+                            except (AttributeError, ValueError):
+                                pass
+        else:
+            # Regular query
+            for node in ast.walk():
+                if isinstance(node, exp.Limit):
+                    if node.expression:
+                        try:
+                            return int(node.expression.this)
+                        except (AttributeError, ValueError):
+                            pass
         return None
     
     def _generate_select(self, select_exprs: List[exp.Expression], df_name: str) -> str:

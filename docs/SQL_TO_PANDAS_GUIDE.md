@@ -179,7 +179,7 @@ df = df.sort_values(by=['total_claims'], ascending=[False])
 
 - **Subqueries**: Basic support, may require manual adjustment
 - **Window Functions**: Not yet supported
-- **CTEs (WITH)**: Not yet supported
+- **CTEs (WITH)**: ✅ Supported - Common Table Expressions are converted to intermediate DataFrames
 - **UNION**: Not yet supported
 - **HAVING**: Not yet fully supported
 
