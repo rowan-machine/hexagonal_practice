@@ -3,8 +3,18 @@ Example: Using the analyst SDK.
 
 Demonstrates how analysts can use the convenience SDK interfaces.
 """
+import sys
+from pathlib import Path
 from decimal import Decimal
-from src.sdk import ClaimsAnalyst, PoliciesAnalyst, StopLossAnalyst
+
+# Add project root to path if package not installed
+try:
+    from src.sdk import ClaimsAnalyst, PoliciesAnalyst, StopLossAnalyst
+except ImportError:
+    # Add project root to path
+    project_root = Path(__file__).parent.parent
+    sys.path.insert(0, str(project_root))
+    from src.sdk import ClaimsAnalyst, PoliciesAnalyst, StopLossAnalyst
 
 
 def claims_analysis_example():
