@@ -3,6 +3,21 @@ import sys
 import json
 from pathlib import Path
 
+# Add project root to path if package not installed
+try:
+    from src.pipelines import ClaimsPipeline, PoliciesPipeline
+    from src.sdk import ClaimsAnalyst, PoliciesAnalyst, StopLossAnalyst
+    from src.utils.database import DatabaseManager
+    from src.utils.config_loader import ConfigLoader
+except ImportError:
+    # Add project root to path
+    project_root = Path(__file__).parent.parent
+    sys.path.insert(0, str(project_root))
+    from src.pipelines import ClaimsPipeline, PoliciesPipeline
+    from src.sdk import ClaimsAnalyst, PoliciesAnalyst, StopLossAnalyst
+    from src.utils.database import DatabaseManager
+    from src.utils.config_loader import ConfigLoader
+
 def verify_imports():
     """Verify all key imports work."""
     print("Checking imports...")
@@ -50,8 +65,8 @@ def verify_data_files():
     files = [
         "data/raw_claims.json",
         "data/raw_policies.json",
-        "pipelines_config/claims_pipeline.yml",
-        "pipelines_config/policies_pipeline.yml"
+        "config/claims_pipeline.yml",
+        "config/policies_pipeline.yml"
     ]
     all_exist = all(Path(f).exists() for f in files)
     if all_exist:
@@ -84,7 +99,7 @@ def verify_sdk():
     """Verify SDK can be instantiated."""
     print("Checking SDK...")
     try:
-        from src.sdk import ClaimsAnalyst, PoliciesAnalyst, StopLossAnalyst
+        # Imports already handled at module level
         from decimal import Decimal
         
         claims_analyst = ClaimsAnalyst(db_path="warehouse.db")
@@ -101,13 +116,23 @@ def verify_config_loader():
     """Verify config loader works."""
     print("Checking config loader...")
     try:
-        from src.utils.config_loader import ConfigLoader
+        # Imports already handled at module level
         from pathlib import Path
         
-        loader = ConfigLoader()
-        config_dir = Path(loader.config_dir)
-        pipeline_files = list(config_dir.glob("*.yml"))
-        pipeline_names = [f.stem for f in pipeline_files]
+        # Try both old and new config locations
+        config_dirs = ["config", "pipelines_config"]
+        found_pipelines = []
+        
+        for config_dir_name in config_dirs:
+            config_dir = Path(config_dir_name)
+            if config_dir.exists():
+                loader = ConfigLoader(config_dir=config_dir_name)
+                pipeline_files = list(config_dir.glob("*.yml"))
+                pipeline_names = [f.stem for f in pipeline_files]
+                found_pipelines.extend(pipeline_names)
+        
+        # Remove duplicates while preserving order
+        pipeline_names = list(dict.fromkeys(found_pipelines))
         
         if "claims_pipeline" in pipeline_names and "policies_pipeline" in pipeline_names:
             print(f"  [OK] Config loader works ({len(pipeline_names)} pipelines found)")
