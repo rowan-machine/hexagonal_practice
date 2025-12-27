@@ -23,6 +23,17 @@ test-dags: ## Run DAG tests (requires Airflow)
 	@echo "Or run in Docker: docker-compose exec airflow pytest src/tests/test_dags_*.py -v"
 	@pytest src/tests/test_dags_*.py -v || echo "DAG tests skipped - Airflow not installed"
 
+test-sql-converter: ## Run SQL to Pandas converter tests
+	@echo "Running SQL to Pandas converter tests..."
+	@pytest src/tests/test_sql_to_pandas.py -v
+
+sql-to-pandas: ## Convert SQL file to pandas (usage: make sql-to-pandas SQL_FILE=path/to/file.sql TABLE=table_name)
+	@if [ -z "$(SQL_FILE)" ]; then \
+		echo "Usage: make sql-to-pandas SQL_FILE=path/to/file.sql TABLE=table_name"; \
+		exit 1; \
+	fi
+	@python scripts/sql_to_pandas_cli.py $(SQL_FILE) --table $(TABLE) || echo "Note: Install sqlglot and pandas: pip install sqlglot pandas"
+
 test-verbose: ## Run tests with verbose output
 	pytest -v
 
