@@ -4,6 +4,27 @@ set -e
 echo "Installing Airflow Python dependencies..."
 pip install --no-cache-dir -r /requirements-airflow.txt
 
+echo "Installing project package in editable mode..."
+# Install the project package so imports work properly
+# The project root is mounted at /opt/airflow/project
+if [ -f /opt/airflow/project/setup.py ] || [ -f /opt/airflow/project/pyproject.toml ]; then
+    # Clean up any existing egg-info directories that might cause conflicts
+    rm -rf /opt/airflow/project/src/*.egg-info 2>/dev/null || true
+    rm -rf /opt/airflow/project/*.egg-info 2>/dev/null || true
+    
+    # Install in editable mode
+    # Note: Project root is mounted (not read-only) so pip can create egg-info
+    if pip install --no-cache-dir -e /opt/airflow/project; then
+        echo "Project package installed successfully"
+    else
+        echo "WARNING: Package installation failed, but continuing..."
+        echo "Imports will work via PYTHONPATH (/opt/airflow:/opt/airflow/src)"
+    fi
+else
+    echo "WARNING: setup.py or pyproject.toml not found at /opt/airflow/project"
+    echo "Relying on PYTHONPATH for imports"
+fi
+
 echo "Waiting for Postgres to be ready..."
 # Wait for postgres to be available - check if hostname resolves first
 MAX_RETRIES=30

@@ -1,0 +1,89 @@
+name: Promote Dev to Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_message:
+        description: 'Commit message for promotion'
+        required: false
+        default: 'Promote dev to test'
+  push:
+    branches:
+      - develop
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+
+jobs:
+  validate:
+    name: Validate Dev Branch
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: develop
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      
+      - name: Run linting
+        run: |
+          ruff check src/ scripts/ examples/
+          black --check src/ scripts/ examples/
+      
+      - name: Run type checking
+        run: mypy src/ --ignore-missing-imports
+        continue-on-error: true
+      
+      - name: Run tests
+        run: pytest --cov=src --cov-report=xml --cov-report=term
+      
+      - name: Run release readiness check
+        run: python scripts/test_release_readiness.py
+      
+      - name: Check test coverage threshold
+        run: |
+          coverage=$(pytest --cov=src --cov-report=term-missing -q | grep TOTAL | awk '{print $NF}' | sed 's/%//')
+          if (( $(echo "$coverage < 70" | bc -l) )); then
+            echo "Coverage $coverage% is below 70% threshold"
+            exit 1
+          fi
+
+  promote:
+    name: Promote to Test Branch
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/develop')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Checkout test branch
+        run: |
+          git fetch origin test:test || git checkout -b test
+          git checkout test
+      
+      - name: Merge develop into test
+        run: |
+          git merge origin/develop --no-edit -m "${{ github.event.inputs.commit_message || 'Promote dev to test [skip ci]' }}"
+      
+      - name: Push to test branch
+        run: git push origin test
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

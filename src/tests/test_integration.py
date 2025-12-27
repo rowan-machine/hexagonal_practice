@@ -119,7 +119,7 @@ class TestConfigLoaderIntegration:
     
     def test_load_claims_pipeline_config(self):
         """Test loading claims pipeline from YAML."""
-        config_loader = ConfigLoader(config_dir="pipelines_config")
+        config_loader = ConfigLoader(config_dir="config")
         config = config_loader.create_pipeline_config("claims_pipeline")
         
         assert config.context.pipeline_name == "claims_pipeline"
@@ -128,7 +128,7 @@ class TestConfigLoaderIntegration:
     
     def test_config_creates_correct_steps(self):
         """Test that config loader creates correct step types."""
-        config_loader = ConfigLoader(config_dir="pipelines_config")
+        config_loader = ConfigLoader(config_dir="config")
         config = config_loader.create_pipeline_config("claims_pipeline")
         
         step_types = [type(step).__name__ for step in config.steps]

@@ -3,6 +3,9 @@ name = "ringmaster-pipelines"
 version = "0.0.1"
 description = "Clean, interface-driven Python data pipelines for stop loss insurance"
 requires-python = ">=3.8"
+authors = [
+    {name = "Ringmaster Technologies"}
+]
 dependencies = [
     "pyyaml>=6.0",
     "pandas>=2.0.0",

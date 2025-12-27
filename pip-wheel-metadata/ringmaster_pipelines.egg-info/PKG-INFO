@@ -4,6 +4,7 @@ Version: 0.0.1
 Summary: Clean, interface-driven Python data pipelines for stop loss insurance
 Author: Ringmaster Technologies
 Requires-Python: >=3.8
+License-File: LICENSE
 Requires-Dist: pyyaml>=6.0
 Requires-Dist: pandas>=2.0.0
 Provides-Extra: dev

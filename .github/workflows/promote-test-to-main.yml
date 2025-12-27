@@ -1,0 +1,116 @@
+name: Promote Test to Main
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: 'Version tag (e.g., v0.0.2)'
+        required: true
+      release_notes:
+        description: 'Release notes'
+        required: false
+        default: 'See CHANGELOG.md'
+  push:
+    branches:
+      - test
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+
+jobs:
+  validate:
+    name: Validate Test Branch
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: test
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      
+      - name: Run all quality checks
+        run: |
+          ruff check src/ scripts/ examples/
+          black --check src/ scripts/ examples/
+          mypy src/ --ignore-missing-imports || true
+      
+      - name: Run full test suite
+        run: pytest --cov=src --cov-report=xml --cov-report=term -v
+      
+      - name: Run release readiness check
+        run: python scripts/test_release_readiness.py
+      
+      - name: Test pipeline execution
+        run: |
+          python scripts/run_local.py claims_pipeline || true
+          python scripts/verify_data_loaded.py || true
+      
+      - name: Check test coverage threshold
+        run: |
+          coverage=$(pytest --cov=src --cov-report=term-missing -q | grep TOTAL | awk '{print $NF}' | sed 's/%//')
+          if (( $(echo "$coverage < 70" | bc -l) )); then
+            echo "Coverage $coverage% is below 70% threshold"
+            exit 1
+          fi
+          echo "Coverage: $coverage%"
+
+  promote:
+    name: Promote to Main Branch
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Checkout main branch
+        run: |
+          git fetch origin main:main
+          git checkout main
+      
+      - name: Merge test into main
+        run: |
+          git merge origin/test --no-edit -m "Release ${{ github.event.inputs.version_tag }}: Promote test to main [skip ci]"
+      
+      - name: Create version tag
+        run: |
+          git tag -a "${{ github.event.inputs.version_tag }}" -m "Release ${{ github.event.inputs.version_tag }}"
+      
+      - name: Push to main and tags
+        run: |
+          git push origin main
+          git push origin "${{ github.event.inputs.version_tag }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.version_tag }}
+          name: Release ${{ github.event.inputs.version_tag }}
+          body: |
+            ${{ github.event.inputs.release_notes }}
+            
+            See [CHANGELOG.md](CHANGELOG.md) for details.
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

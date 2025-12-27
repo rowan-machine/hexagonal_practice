@@ -64,48 +64,86 @@ class AtlasClient(LoggingMixin):
             return
         
         try:
-            # Atlas v2 API uses /api/atlas/v2/entity/bulk for batch operations
-            # But single entity endpoint is /api/atlas/v2/entity
-            url = f"{self.base_url}/api/atlas/v2/entity"
+            # Atlas v2 API: Use bulk endpoint for publishing entities
+            # Sort entities by type to ensure dependencies are created first:
+            # 1. hive_db (databases)
+            # 2. hive_table (tables - depend on databases)
+            # 3. Process (processes - depend on tables)
             entity_count = len(payload.get("entities", []))
-            self.log_info(f"Publishing to Atlas", url=url, entity_count=entity_count)
+            self.log_info(f"Publishing to Atlas", entity_count=entity_count)
             
-            # Try without auth first (some Atlas setups don't require it)
             headers = {
                 "Content-Type": "application/json",
                 "Accept": "application/json"
             }
             
-            response = requests.post(
-                url,
-                json=payload,
-                timeout=10,
-                headers=headers
-            )
+            entities = payload.get("entities", [])
+            type_order = {"hive_db": 1, "hive_table": 2, "Process": 3}
             
-            # Check for authentication errors
-            if response.status_code == 401:
-                # Try with default credentials (admin/admin)
-                self.log_info("Atlas requires authentication, retrying with admin/admin")
-                response = requests.post(
-                    url,
-                    json=payload,
-                    timeout=10,
-                    headers=headers,
-                    auth=("admin", "admin")
-                )
+            # Group entities by type to publish in dependency order
+            entities_by_type = {}
+            for entity in entities:
+                entity_type = entity.get("typeName", "")
+                if entity_type not in entities_by_type:
+                    entities_by_type[entity_type] = []
+                entities_by_type[entity_type].append(entity)
             
-            # Log response details for debugging
-            if response.status_code != 200:
-                self.log_warning(
-                    f"Atlas returned non-200 status",
-                    status_code=response.status_code,
-                    response_text=response.text[:200]
-                )
+            # Publish in dependency order: databases first, then tables, then processes
+            url = f"{self.base_url}/api/atlas/v2/entity/bulk"
+            published_count = 0
             
-            response.raise_for_status()
+            for entity_type in ["hive_db", "hive_table", "Process"]:
+                if entity_type not in entities_by_type:
+                    continue
+                
+                type_entities = entities_by_type[entity_type]
+                bulk_payload = {"entities": type_entities}
+                
+                try:
+                    # Try without auth first
+                    response = requests.post(
+                        url,
+                        json=bulk_payload,
+                        timeout=30,
+                        headers=headers
+                    )
+                    
+                    # Check for authentication errors
+                    if response.status_code == 401:
+                        # Try with default credentials (admin/admin)
+                        self.log_info("Atlas requires authentication, retrying with admin/admin")
+                        response = requests.post(
+                            url,
+                            json=bulk_payload,
+                            timeout=30,
+                            headers=headers,
+                            auth=("admin", "admin")
+                        )
+                    
+                    if response.status_code == 200:
+                        published_count += len(type_entities)
+                        self.log_info(f"Published {len(type_entities)} {entity_type} entities")
+                    else:
+                        # Log error but continue
+                        error_text = response.text[:500] if response.text else "Unknown error"
+                        self.log_warning(
+                            f"Failed to publish {entity_type} entities",
+                            status_code=response.status_code,
+                            response_text=error_text
+                        )
+                        
+                except requests.exceptions.RequestException as e:
+                    self.log_warning(
+                        f"Error publishing {entity_type} entities",
+                        error=str(e)
+                    )
             
-            self.log_info("Atlas metadata published successfully", entity_count=entity_count)
+            if published_count > 0:
+                self.log_info(f"Atlas metadata published successfully", entity_count=published_count)
+            else:
+                self.log_warning("No entities were published to Atlas")
+                # If nothing was published, don't try to access response
+                return
         except requests.exceptions.RequestException as e:
             # Don't fail the pipeline if Atlas publish fails - just log warning
             status_code = None

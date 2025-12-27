@@ -53,7 +53,7 @@ class TestEndToEndClaimsPipeline:
         
         try:
             # Update config to use test data
-            config_loader = ConfigLoader(config_dir="pipelines_config")
+            config_loader = ConfigLoader(config_dir="config")
             
             # Manually create config with test paths
             from src.pipelines.base import PipelineConfig, ExecutionContext

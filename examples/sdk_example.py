@@ -3,8 +3,18 @@ Example: Using the analyst SDK.
 
 Demonstrates how analysts can use the convenience SDK interfaces.
 """
+import sys
+from pathlib import Path
 from decimal import Decimal
-from src.sdk import ClaimsAnalyst, PoliciesAnalyst, StopLossAnalyst
+
+# Add project root to path if package not installed
+try:
+    from src.sdk import ClaimsAnalyst, PoliciesAnalyst, StopLossAnalyst
+except ImportError:
+    # Add project root to path
+    project_root = Path(__file__).parent.parent
+    sys.path.insert(0, str(project_root))
+    from src.sdk import ClaimsAnalyst, PoliciesAnalyst, StopLossAnalyst
 
 
 def claims_analysis_example():
@@ -13,8 +23,12 @@ def claims_analysis_example():
     # Create analyst instance
     analyst = ClaimsAnalyst(approval_threshold=Decimal("100000.00"))
     
-    # Load claims from file
-    claims = analyst.load_claims("data/raw_claims.json", file_format="json")
+    # Load claims from database (primary method)
+    claims = analyst.load_from_database(layer="silver")
+    
+    if not claims:
+        print("No claims found in database. Run pipelines first to load data.")
+        return
     
     # Get total claims
     total = analyst.get_total_claims(claims)
@@ -35,9 +49,6 @@ def claims_analysis_example():
     # Convert to DataFrame for analysis
     df = analyst.to_dataframe(claims)
     print(f"DataFrame shape: {df.shape if hasattr(df, 'shape') else 'N/A'}")
-    
-    # Save processed claims
-    analyst.save_claims(claims, "data/processed_claims.json")
 
 
 def policies_analysis_example():
@@ -46,16 +57,22 @@ def policies_analysis_example():
     # Create analyst instance
     analyst = PoliciesAnalyst()
     
-    # Load policies from file
-    policies = analyst.load_policies("data/raw_policies.json", file_format="json")
+    # Load policies from database (primary method)
+    policies = analyst.load_from_database(layer="silver")
+    
+    if not policies:
+        print("No policies found in database. Run pipelines first to load data.")
+        return
     
     # Get active policies
     active = analyst.get_active_policies(policies)
     print(f"Active policies: {len(active)}")
     
-    # Get policies for specific employer
-    employer_policies = analyst.get_employer_policies(policies, employer_id="EMP001")
-    print(f"Policies for employer EMP001: {len(employer_policies)}")
+    # Get policies for specific employer (if any policies exist)
+    if policies:
+        employer_id = policies[0].employer_id
+        employer_policies = analyst.get_employer_policies(policies, employer_id=employer_id)
+        print(f"Policies for selected employer: {len(employer_policies)}")
     
     # Get total coverage
     total_coverage = analyst.get_total_coverage(policies)
@@ -72,20 +89,25 @@ def combined_analysis_example():
     # Create combined analyst
     analyst = StopLossAnalyst(approval_threshold=Decimal("100000.00"))
     
-    # Load data
-    claims = analyst.claims_analyst.load_claims("data/raw_claims.json")
-    policies = analyst.policies_analyst.load_policies("data/raw_policies.json")
-    
-    # Analyze claims by policy
-    analysis = analyst.analyze_claims_by_policy(claims, policies)
-    print(f"Analysis complete for {len(analysis)} policies")
-    
-    # Calculate coverage utilization
-    utilization = analyst.calculate_coverage_utilization(claims, policies)
+    # Get coverage utilization (loads data internally)
+    utilization = analyst.get_coverage_utilization()
     print(f"Coverage utilization calculated for {len(utilization)} policies")
     
     for util in utilization[:5]:  # Show first 5
-        print(f"Policy {util['policy_id']}: {util['utilization_percent']:.2f}% utilized")
+        policy_id = util.get('policy_id', 'N/A')
+        utilization_pct = util.get('utilization_percent', 0)
+        print(f"Policy {policy_id}: {utilization_pct:.2f}% utilized")
+    
+    # Get claims by policy summary
+    summary = analyst.get_claims_by_policy_summary()
+    print(f"\nClaims by policy summary:")
+    print(f"  Total policies: {summary.get('total_policies', 0)}")
+    print(f"  Total claims: {summary.get('total_claims', 0)}")
+    print(f"  Total claim amount: ${summary.get('total_claim_amount', 0):,.2f}")
+    
+    # Get high utilization policies
+    high_util = analyst.get_high_utilization_policies(threshold_percent=50.0)
+    print(f"\nHigh utilization policies (>50%): {len(high_util)}")
 
 
 if __name__ == "__main__":

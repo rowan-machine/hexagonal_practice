@@ -1,33 +1,22 @@
 """
 Setup configuration for editable installation.
 
+This file is kept for backward compatibility.
+Modern projects should use pyproject.toml (which is the primary config).
 Install with: pip install -e .
 """
 from setuptools import setup, find_packages
 
+# Read version and metadata from pyproject.toml if available
+# Otherwise use defaults
 setup(
     name="ringmaster-pipelines",
     version="0.0.1",
     description="Clean, interface-driven Python data pipelines for stop loss insurance",
-    author="Ringmaster Technologies",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     python_requires=">=3.8",
-    install_requires=[
-        "pyyaml>=6.0",
-        "pandas>=2.0.0",
-    ],
-    extras_require={
-        "dev": [
-            "pytest>=7.0.0",
-            "pytest-cov>=4.0.0",
-            "mypy>=1.0.0",
-            "types-python-dateutil>=2.8.0",
-            "black>=23.0.0",
-            "ruff>=0.1.0",
-            "jupyter>=1.0.0",
-            "ipykernel>=6.0.0",
-        ],
-    },
+    # Dependencies are defined in pyproject.toml
+    # This setup.py is minimal to avoid conflicts
 )
 
