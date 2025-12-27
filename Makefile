@@ -26,8 +26,8 @@ test-dags: ## Run DAG tests locally (requires Airflow)
 test-dags-docker: ## Run DAG tests in Docker container (recommended)
 	@echo "Running DAG tests in Docker container..."
 	@echo "Note: Docker services must be running. Start with: make docker-up-wait"
-	@docker-compose exec -T airflow pytest src/tests/test_dags_*.py -v || \
-		(echo "Error: Docker services may not be running. Start with: make docker-up-wait" && exit 1)
+	@docker-compose exec -T airflow python -m pytest src/tests/test_dags_*.py -v || \
+		(echo "Error: Docker services may not be running or pytest not installed. Start with: make docker-up-wait" && exit 1)
 
 test-sql-converter: ## Run SQL to Pandas converter tests
 	@echo "Running SQL to Pandas converter tests..."
