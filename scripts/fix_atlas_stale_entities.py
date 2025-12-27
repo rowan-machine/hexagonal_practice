@@ -115,7 +115,7 @@ def republish_all_entities(atlas_url: str = "http://localhost:21000") -> None:
     print("=" * 60)
     print()
     
-    client = AtlasClient(atlas_url=atlas_url)
+    client = AtlasClient(base_url=atlas_url)
     
     # Build and publish all payloads
     payloads = [
