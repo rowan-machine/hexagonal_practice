@@ -17,11 +17,17 @@ install-dev: ## Install development dependencies
 test: ## Run all tests
 	pytest
 
-test-dags: ## Run DAG tests (requires Airflow)
-	@echo "Running DAG tests..."
+test-dags: ## Run DAG tests locally (requires Airflow)
+	@echo "Running DAG tests locally..."
 	@echo "Note: These tests require Apache Airflow. Install with: pip install apache-airflow==2.10.3"
-	@echo "Or run in Docker: docker-compose exec airflow pytest src/tests/test_dags_*.py -v"
+	@echo "Or use: make test-dags-docker"
 	@pytest src/tests/test_dags_*.py -v || echo "DAG tests skipped - Airflow not installed"
+
+test-dags-docker: ## Run DAG tests in Docker container (recommended)
+	@echo "Running DAG tests in Docker container..."
+	@echo "Note: Docker services must be running. Start with: make docker-up-wait"
+	@docker-compose exec -T airflow pytest src/tests/test_dags_*.py -v || \
+		(echo "Error: Docker services may not be running. Start with: make docker-up-wait" && exit 1)
 
 test-sql-converter: ## Run SQL to Pandas converter tests
 	@echo "Running SQL to Pandas converter tests..."
