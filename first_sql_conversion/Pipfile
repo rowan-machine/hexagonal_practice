@@ -1,0 +1,22 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+# This simplified example uses only Python's standard library!
+# No external dependencies required.
+#
+# If you want to add dependencies later, add them here:
+# pandas = ">=2.0.0"
+# numpy = ">=1.24.0"
+
+[dev-packages]
+# Development dependencies (optional)
+# pytest = "*"
+# black = "*"
+# ruff = "*"
+
+[requires]
+python_version = "3.8"
+

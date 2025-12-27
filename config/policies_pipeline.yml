@@ -1,0 +1,44 @@
+pipeline:
+  name: policies_pipeline
+  description: "Stop loss insurance policies processing pipeline"
+  
+  steps:
+    - name: policies_bronze
+      type: bronze
+      source:
+        path: "data/raw_policies.json"
+        format: "json"
+      config:
+        basic_cleaning: true
+    
+    - name: policies_silver
+      type: silver
+      domain_handler: PolicyProcessor
+      config: {}
+    
+    - name: policies_validation
+      type: validation
+      data_key: silver_data
+      config:
+        rules:
+          - name: stop_loss_limit_positive
+            severity: error
+          - name: expiration_after_effective
+            severity: error
+    
+    - name: policies_gold
+      type: gold
+      aggregation:
+        type: by_employer
+        group_by:
+          - employer_id
+        aggregations:
+          stop_loss_limit: sum
+          policy_id: count
+  
+  execution:
+    stop_on_error: true
+    skip_completed: false
+    enable_metrics: true
+    enable_logging: true
+
