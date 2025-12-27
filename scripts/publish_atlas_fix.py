@@ -5,14 +5,28 @@ This script attempts multiple authentication methods and provides
 detailed error messages.
 """
 import sys
+from pathlib import Path
 from typing import Tuple, List, Optional
 import requests
-from src.utils.atlas_payloads import (
-    build_policies_table_payload,
-    build_policies_aggregates_payload,
-    build_claims_table_payload,
-    build_claims_aggregates_payload
-)
+
+# Add project root to path if package not installed
+try:
+    from src.utils.atlas_payloads import (
+        build_policies_table_payload,
+        build_policies_aggregates_payload,
+        build_claims_table_payload,
+        build_claims_aggregates_payload
+    )
+except ImportError:
+    # Add project root to path
+    project_root = Path(__file__).parent.parent
+    sys.path.insert(0, str(project_root))
+    from src.utils.atlas_payloads import (
+        build_policies_table_payload,
+        build_policies_aggregates_payload,
+        build_claims_table_payload,
+        build_claims_aggregates_payload
+    )
 
 
 def publish_with_auth(url: str, payload: dict, auth_methods: Optional[List] = None) -> Tuple[bool, str]:

@@ -12,13 +12,28 @@ Usage:
 """
 import argparse
 import sys
-from src.utils.atlas import AtlasClient
-from src.utils.atlas_payloads import (
-    build_policies_table_payload,
-    build_policies_aggregates_payload,
-    build_claims_table_payload,
-    build_claims_aggregates_payload
-)
+from pathlib import Path
+
+# Add project root to path if package not installed
+try:
+    from src.utils.atlas import AtlasClient
+    from src.utils.atlas_payloads import (
+        build_policies_table_payload,
+        build_policies_aggregates_payload,
+        build_claims_table_payload,
+        build_claims_aggregates_payload
+    )
+except ImportError:
+    # Add project root to path
+    project_root = Path(__file__).parent.parent
+    sys.path.insert(0, str(project_root))
+    from src.utils.atlas import AtlasClient
+    from src.utils.atlas_payloads import (
+        build_policies_table_payload,
+        build_policies_aggregates_payload,
+        build_claims_table_payload,
+        build_claims_aggregates_payload
+    )
 
 
 def publish_all_metadata(atlas_url: str = "http://localhost:21000", enabled: bool = True):
