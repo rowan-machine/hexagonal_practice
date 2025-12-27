@@ -18,6 +18,17 @@ try:
     SQLGLOT_AVAILABLE = True
 except ImportError:
     SQLGLOT_AVAILABLE = False
+    # Create a dummy exp module for type hints when sqlglot is not available
+    class DummyExp:
+        class Expression:
+            pass
+        class With:
+            pass
+        class Select:
+            pass
+        class CTE:
+            pass
+    exp = DummyExp()
 
 try:
     import pandas as pd
@@ -208,7 +219,7 @@ class SQLToPandasConverter:
         
         return "\n".join(all_operations)
     
-    def _extract_ctes(self, ast: exp.Expression) -> List[Dict[str, Any]]:
+    def _extract_ctes(self, ast: Any) -> List[Dict[str, Any]]:
         """Extract CTEs (WITH clauses) from AST."""
         ctes = []
         
@@ -237,7 +248,7 @@ class SQLToPandasConverter:
         
         return ctes
     
-    def _extract_select(self, ast: exp.Expression) -> List[exp.Expression]:
+    def _extract_select(self, ast: Any) -> List[Any]:
         """Extract SELECT expressions from AST."""
         selects = []
         
@@ -255,7 +266,7 @@ class SQLToPandasConverter:
         
         return selects
     
-    def _extract_from(self, ast: exp.Expression) -> Optional[str]:
+    def _extract_from(self, ast: Any) -> Optional[str]:
         """Extract FROM table name."""
         # Handle With expressions - extract FROM from main query
         if isinstance(ast, exp.With):
@@ -281,7 +292,7 @@ class SQLToPandasConverter:
                             return table.name
         return None
     
-    def _extract_where(self, ast: exp.Expression) -> Optional[exp.Expression]:
+    def _extract_where(self, ast: Any) -> Optional[Any]:
         """Extract WHERE expression."""
         # Handle With expressions - extract WHERE from main query
         if isinstance(ast, exp.With):
@@ -297,7 +308,7 @@ class SQLToPandasConverter:
                     return node.this
         return None
     
-    def _extract_joins(self, ast: exp.Expression) -> List[Dict[str, Any]]:
+    def _extract_joins(self, ast: Any) -> List[Dict[str, Any]]:
         """Extract JOIN expressions."""
         joins = []
         for node in ast.walk():
@@ -315,7 +326,7 @@ class SQLToPandasConverter:
                 joins.append(join_info)
         return joins
     
-    def _extract_group_by(self, ast: exp.Expression) -> List[str]:
+    def _extract_group_by(self, ast: Any) -> List[str]:
         """Extract GROUP BY columns."""
         group_by = []
         # Handle With expressions - extract GROUP BY from main query
@@ -340,7 +351,7 @@ class SQLToPandasConverter:
                             group_by.append(expr.name)
         return group_by
     
-    def _extract_order_by(self, ast: exp.Expression) -> List[Dict[str, Any]]:
+    def _extract_order_by(self, ast: Any) -> List[Dict[str, Any]]:
         """Extract ORDER BY expressions."""
         order_by = []
         # Handle With expressions - extract ORDER BY from main query
@@ -383,7 +394,7 @@ class SQLToPandasConverter:
                         order_by.append(order_info)
         return order_by
     
-    def _extract_limit(self, ast: exp.Expression) -> Optional[int]:
+    def _extract_limit(self, ast: Any) -> Optional[int]:
         """Extract LIMIT value."""
         # Handle With expressions - extract LIMIT from main query
         if isinstance(ast, exp.With):
@@ -407,7 +418,7 @@ class SQLToPandasConverter:
                             pass
         return None
     
-    def _generate_select(self, select_exprs: List[exp.Expression], df_name: str) -> str:
+    def _generate_select(self, select_exprs: List[Any], df_name: str) -> str:
         """Generate pandas code for SELECT."""
         columns = []
         aggregations = {}
@@ -445,7 +456,7 @@ class SQLToPandasConverter:
         
         return f"# SELECT: {select_exprs}"
     
-    def _generate_where(self, where_expr: exp.Expression, df_name: str) -> str:
+    def _generate_where(self, where_expr: Any, df_name: str) -> str:
         """Generate pandas code for WHERE clause."""
         condition = self._expression_to_pandas(where_expr)
         return f"{df_name} = {df_name}.query({condition!r})"
@@ -613,7 +624,7 @@ class SQLToPandasConverter:
         }
         return mapping.get(sql_func.lower(), sql_func.lower())
     
-    def _expression_to_pandas(self, expr: exp.Expression) -> str:
+    def _expression_to_pandas(self, expr: Any) -> str:
         """Convert SQL expression to pandas query string."""
         if isinstance(expr, exp.Column):
             return expr.name
@@ -656,7 +667,7 @@ class SQLToPandasConverter:
     
     def _execute_pandas(
         self,
-        ast: exp.Expression,
+        ast: Any,
         source_table: str,
         df_name: str
     ) -> pd.DataFrame:
