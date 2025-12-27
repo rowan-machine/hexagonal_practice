@@ -133,6 +133,8 @@ class SQLToPandasConverter:
         
         # Process CTEs (WITH clauses) first
         ctes = self._extract_ctes(ast)
+        cte_names = [cte['name'] for cte in ctes] if ctes else []
+        
         if ctes:
             # Generate code for each CTE
             for i, cte in enumerate(ctes):
@@ -141,6 +143,7 @@ class SQLToPandasConverter:
                 cte_df_name = f"cte_{cte_name.lower()}"
                 
                 # Recursively convert the CTE query
+                # Pass cte_names to avoid infinite recursion
                 cte_code = self._generate_pandas_code(
                     cte_query,
                     source_table,
@@ -150,6 +153,12 @@ class SQLToPandasConverter:
                 cte_operations.append(cte_code)
                 cte_operations.append(f"{cte_name} = {cte_df_name}  # Alias for CTE")
                 cte_operations.append("")
+        
+        # Get the main query (if With, extract the main query; otherwise use ast)
+        if isinstance(ast, exp.With):
+            main_query = ast.this
+        else:
+            main_query = ast
         
         # Start with DataFrame
         operations.append(f"{df_name} = pd.DataFrame()  # Load from {source_table}")
@@ -163,7 +172,7 @@ class SQLToPandasConverter:
         from_table = self._extract_from(ast) or source_table
         if from_table:
             # Check if FROM references a CTE
-            if ctes and from_table in [cte['name'] for cte in ctes]:
+            if from_table in cte_names:
                 # Use the CTE DataFrame
                 operations[0] = f"{df_name} = {from_table}.copy()  # Use CTE"
             else:
