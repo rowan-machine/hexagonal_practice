@@ -86,15 +86,60 @@ class SilverStep(PipelineStep, LoggingMixin, MetricsMixin):
         Apply business validations.
         
         Uses validation mixin if available on domain handler.
+        Handles both single items and lists of items.
         """
         self.log_info("Applying business validations")
         
         if self.domain_handler and hasattr(self.domain_handler, "validate"):
-            is_valid = self.domain_handler.validate(data)
-            if not is_valid:
-                self.log_warning("Business validations failed", 
-                               results=self.domain_handler.get_validation_results() 
-                               if hasattr(self.domain_handler, "get_validation_results") else None)
+            # Clear previous validation results
+            if hasattr(self.domain_handler, "clear_validation_results"):
+                self.domain_handler.clear_validation_results()
+            
+            # Handle list of items
+            if isinstance(data, list):
+                all_valid = True
+                for item in data:
+                    # If item is a dict, we need to convert it back to a domain object for validation
+                    # This happens when SilverStep converts domain objects to dicts
+                    if isinstance(item, dict):
+                        # Try to find a method to convert dict back to domain object
+                        # Check for both _create_claim_from_dict and _create_policy_from_dict
+                        if hasattr(self.domain_handler, "_create_claim_from_dict"):
+                            domain_obj = self.domain_handler._create_claim_from_dict(item)
+                        elif hasattr(self.domain_handler, "_create_policy_from_dict"):
+                            domain_obj = self.domain_handler._create_policy_from_dict(item)
+                        else:
+                            # No conversion method found, skip validation for this item
+                            self.log_warning("Cannot validate dict item: no conversion method found")
+                            continue
+                        
+                        is_valid = self.domain_handler.validate(domain_obj)
+                        if not is_valid:
+                            all_valid = False
+                    else:
+                        # Item is already a domain object (Claim, Policy, etc.)
+                        is_valid = self.domain_handler.validate(item)
+                        if not is_valid:
+                            all_valid = False
+                
+                if not all_valid:
+                    self.log_warning("Business validations failed", 
+                                   results=self.domain_handler.get_validation_results() 
+                                   if hasattr(self.domain_handler, "get_validation_results") else None)
+            else:
+                # Single item validation
+                # If it's a dict, convert it first
+                if isinstance(data, dict):
+                    if hasattr(self.domain_handler, "_create_claim_from_dict"):
+                        data = self.domain_handler._create_claim_from_dict(data)
+                    elif hasattr(self.domain_handler, "_create_policy_from_dict"):
+                        data = self.domain_handler._create_policy_from_dict(data)
+                
+                is_valid = self.domain_handler.validate(data)
+                if not is_valid:
+                    self.log_warning("Business validations failed", 
+                                   results=self.domain_handler.get_validation_results() 
+                                   if hasattr(self.domain_handler, "get_validation_results") else None)
         
         return data
 

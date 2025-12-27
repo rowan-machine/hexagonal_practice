@@ -155,7 +155,10 @@ python scripts/verify_setup.py
 **Commands:**
 ```bash
 docker-compose config  # Validate config
-docker-compose up -d   # Start services
+make docker-up-wait    # Start services and wait for Airflow (recommended)
+# Or:
+make docker-up         # Start services without waiting
+make wait-airflow      # Wait for Airflow separately
 docker-compose ps      # Check status
 docker-compose down    # Stop services
 ```

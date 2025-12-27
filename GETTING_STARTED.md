@@ -30,10 +30,10 @@ source venv/bin/activate
 
 ```bash
 # Install production dependencies
-pip install -r requirements.txt
+pip install -r requirements/requirements.txt
 
 # Install development dependencies (for testing)
-pip install -r requirements-dev.txt
+pip install -r requirements/requirements-dev.txt
 ```
 
 ### Verify Installation
@@ -307,12 +307,12 @@ python run_local.py claims_pipeline
 
 ```bash
 # Reinstall dependencies
-pip install -r requirements.txt
+pip install -r requirements/requirements.txt
 ```
 
 ## Next Steps
 
-1. **Read the Architecture**: See `ARCHITECTURE.md`
+1. **Read the Architecture**: See [README.md](README.md) (Architecture Overview section) and [docs/DESIGN_PRINCIPLES.md](docs/DESIGN_PRINCIPLES.md)
 2. **Explore Examples**: Check `examples/` directory
 3. **Read Tests**: Learn from `src/tests/`
 4. **Try Notebooks**: Experiment with `notebooks/`
@@ -321,7 +321,7 @@ pip install -r requirements.txt
 ## Getting Help
 
 - Check `README.md` for detailed documentation
-- Review `ARCHITECTURE.md` for design principles
+- Review [docs/DESIGN_PRINCIPLES.md](docs/DESIGN_PRINCIPLES.md) for design principles
 - Look at test files for usage examples
 - Ask questions in team channels
 

@@ -50,8 +50,8 @@ def verify_data_files():
     files = [
         "data/raw_claims.json",
         "data/raw_policies.json",
-        "config/claims_pipeline.yml",
-        "config/policies_pipeline.yml"
+        "pipelines_config/claims_pipeline.yml",
+        "pipelines_config/policies_pipeline.yml"
     ]
     all_exist = all(Path(f).exists() for f in files)
     if all_exist:

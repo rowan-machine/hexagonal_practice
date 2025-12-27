@@ -124,8 +124,12 @@ pre-commit run --all-files
 # Validate compose file
 docker-compose config
 
-# Start services
-docker-compose up -d
+# Start services and wait for Airflow to be ready (recommended)
+make docker-up-wait
+
+# Or start without waiting
+make docker-up
+make wait-airflow
 
 # Check status
 docker-compose ps

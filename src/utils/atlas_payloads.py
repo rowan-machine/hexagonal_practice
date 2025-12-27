@@ -21,12 +21,13 @@ from typing import Dict, List, Any
 # Helpers
 # =============================================================================
 
-def hive_db_payload(db_name: str) -> Dict[str, Any]:
+def hive_db_payload(db_name: str, cluster_name: str = "postgres") -> Dict[str, Any]:
     """
     Build Atlas payload for a Hive database entity.
     
     Args:
         db_name: Database name (e.g., "warehouse")
+        cluster_name: Cluster name (default: "postgres")
         
     Returns:
         Atlas entity dictionary for hive_db type
@@ -34,8 +35,9 @@ def hive_db_payload(db_name: str) -> Dict[str, Any]:
     return {
         "typeName": "hive_db",
         "attributes": {
-            "qualifiedName": f"{db_name}@postgres",
+            "qualifiedName": f"{db_name}@{cluster_name}",
             "name": db_name,
+            "clusterName": cluster_name,
         },
     }
 
@@ -61,6 +63,7 @@ def hive_table_payload(
             "qualifiedName": f"{db_name}.{table_name}@postgres",
             "name": table_name,
             "db": {
+                "typeName": "hive_db",
                 "uniqueAttributes": {
                     "qualifiedName": f"{db_name}@postgres"
                 }
@@ -95,17 +98,36 @@ def process_payload(
     
     # Only include inputs/outputs if they're not empty
     # Empty lists can cause "null entity" errors in Atlas
+    # Atlas requires typeName in references - infer from qualified name pattern
     if inputs:
-        attrs["inputs"] = [
-            {"uniqueAttributes": {"qualifiedName": qn}}
-            for qn in inputs
-        ]
+        attrs["inputs"] = []
+        for qn in inputs:
+            # Infer type from qualified name pattern
+            if "@postgres" in qn and "." in qn:
+                ref_type = "hive_table"
+            elif "@postgres" in qn:
+                ref_type = "hive_db"
+            else:
+                ref_type = "Process"
+            attrs["inputs"].append({
+                "typeName": ref_type,
+                "uniqueAttributes": {"qualifiedName": qn}
+            })
     
     if outputs:
-        attrs["outputs"] = [
-            {"uniqueAttributes": {"qualifiedName": qn}}
-            for qn in outputs
-        ]
+        attrs["outputs"] = []
+        for qn in outputs:
+            # Infer type from qualified name pattern
+            if "@postgres" in qn and "." in qn:
+                ref_type = "hive_table"
+            elif "@postgres" in qn:
+                ref_type = "hive_db"
+            else:
+                ref_type = "Process"
+            attrs["outputs"].append({
+                "typeName": ref_type,
+                "uniqueAttributes": {"qualifiedName": qn}
+            })
     
     return {
         "typeName": "Process",

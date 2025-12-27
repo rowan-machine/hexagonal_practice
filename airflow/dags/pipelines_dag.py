@@ -30,7 +30,7 @@ def run_claims_pipeline():
     
     All business logic is in ClaimsPipeline, not here.
     """
-    config_loader = ConfigLoader()
+    config_loader = ConfigLoader(config_dir="config")
     pipeline_config = config_loader.create_pipeline_config("claims_pipeline")
     pipeline = ClaimsPipeline(pipeline_config)
     pipeline.run()
@@ -42,7 +42,7 @@ def run_policies_pipeline():
     
     All business logic is in PoliciesPipeline, not here.
     """
-    config_loader = ConfigLoader()
+    config_loader = ConfigLoader(config_dir="config")
     pipeline_config = config_loader.create_pipeline_config("policies_pipeline")
     pipeline = PoliciesPipeline(pipeline_config)
     pipeline.run()

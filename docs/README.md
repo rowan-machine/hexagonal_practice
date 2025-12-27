@@ -22,7 +22,7 @@ This is the **documentation navigation hub** for the project. Use this to find s
 ### Getting Started
 - **[README.md](../README.md)** - Main project documentation
 - **[GETTING_STARTED.md](../GETTING_STARTED.md)** - Step-by-step setup guide
-- **[PIPENV_GUIDE.md](../PIPENV_GUIDE.md)** - Complete Pipenv usage guide
+- **[PIPENV_GUIDE.md](PIPENV_GUIDE.md)** - Complete Pipenv usage guide
 
 ### Architecture & Design
 - **[README.md](../README.md)** → Architecture Overview section
@@ -39,7 +39,8 @@ This is the **documentation navigation hub** for the project. Use this to find s
 - **[VALIDATION_GUIDE.md](../config/VALIDATION_GUIDE.md)** - Data validation system
 
 ### Infrastructure
-- **[DOCKER.md](../DOCKER.md)** - Complete Docker and Docker Compose guide (setup, usage, troubleshooting)
+- **[DOCKER.md](../DOCKER.md)** - ⭐ Complete Docker and Docker Compose guide (setup, usage, troubleshooting)
+- **[ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md)** - Environment variable configuration
 
 ### Data Governance
 - **[ATLAS_GUIDE.md](ATLAS_GUIDE.md)** - Complete Apache Atlas guide
@@ -168,6 +169,6 @@ All documentation follows these principles:
 **Want to understand navigation?**
 
 1. **[NAVIGATION_GUIDE.md](NAVIGATION_GUIDE.md)** → Complete navigation guide
-2. **[DOCUMENTATION_STRUCTURE.md](DOCUMENTATION_STRUCTURE.md)** → Documentation structure
-3. **[ROOT_DOCS_ORGANIZATION.md](ROOT_DOCS_ORGANIZATION.md)** → Root directory organization
+2. **[ROOT_DOCUMENTATION.md](ROOT_DOCUMENTATION.md)** → Root directory organization
+3. **[DOCUMENTATION_CLEANUP_SUMMARY.md](DOCUMENTATION_CLEANUP_SUMMARY.md)** → Documentation cleanup summary
 

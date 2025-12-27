@@ -1,9 +1,10 @@
-Metadata-Version: 2.1
+Metadata-Version: 2.4
 Name: ringmaster-pipelines
 Version: 0.0.1
 Summary: Clean, interface-driven Python data pipelines for stop loss insurance
 Author: Ringmaster Technologies
 Requires-Python: >=3.8
+License-File: LICENSE
 Requires-Dist: pyyaml>=6.0
 Requires-Dist: pandas>=2.0.0
 Provides-Extra: dev
@@ -15,3 +16,5 @@ Requires-Dist: black>=23.0.0; extra == "dev"
 Requires-Dist: ruff>=0.1.0; extra == "dev"
 Requires-Dist: jupyter>=1.0.0; extra == "dev"
 Requires-Dist: ipykernel>=6.0.0; extra == "dev"
+Dynamic: license-file
+Dynamic: requires-python

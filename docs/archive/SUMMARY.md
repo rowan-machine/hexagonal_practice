@@ -209,7 +209,7 @@ pytest
 jupyter notebook
 
 # Run with Docker
-docker-compose up -d
+make docker-up-wait  # Start services and wait for Airflow
 ```
 
 ## ✨ Highlights

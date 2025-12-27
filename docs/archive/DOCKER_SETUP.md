@@ -46,8 +46,16 @@ This document describes the Docker Compose setup for the data pipeline system.
 ### Start Services
 
 ```bash
-docker-compose up -d
+# Recommended: Start services and wait for Airflow to be ready
+make docker-up-wait
+
+# Or start services without waiting
+make docker-up
+# Then wait for Airflow separately:
+make wait-airflow
 ```
+
+**Note**: Using `make docker-up-wait` ensures Airflow's webserver (gunicorn) is ready before proceeding. This is especially useful when you need to access the Airflow UI immediately.
 
 ### Stop Services
 

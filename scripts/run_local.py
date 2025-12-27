@@ -7,9 +7,19 @@ import argparse
 import sys
 from pathlib import Path
 from typing import List
-from src.utils.config_loader import ConfigLoader
-from src.pipelines import ClaimsPipeline, PoliciesPipeline
-from src.mixins.logging import LoggingMixin
+
+# Add project root to path if package not installed
+try:
+    from src.utils.config_loader import ConfigLoader
+    from src.pipelines import ClaimsPipeline, PoliciesPipeline
+    from src.mixins.logging import LoggingMixin
+except ImportError:
+    # Add project root to path
+    project_root = Path(__file__).parent.parent
+    sys.path.insert(0, str(project_root))
+    from src.utils.config_loader import ConfigLoader
+    from src.pipelines import ClaimsPipeline, PoliciesPipeline
+    from src.mixins.logging import LoggingMixin
 
 
 class PipelineRunner(LoggingMixin):

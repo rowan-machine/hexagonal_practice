@@ -1,10 +1,12 @@
 services:
   postgres:
     image: postgres:13
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: airflow
-      POSTGRES_PASSWORD: airflow
-      POSTGRES_DB: airflow
+      POSTGRES_USER: ${POSTGRES_USER:-airflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-airflow}
+      POSTGRES_DB: ${POSTGRES_DB:-airflow}
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
       # Optional: Only mount init.sql if it exists (comment out if not needed)
@@ -19,10 +21,12 @@ services:
 
   warehouse:
     image: postgres:13
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: warehouse
-      POSTGRES_PASSWORD: warehouse
-      POSTGRES_DB: warehouse
+      POSTGRES_USER: ${WAREHOUSE_DB_USER:-warehouse}
+      POSTGRES_PASSWORD: ${WAREHOUSE_DB_PASSWORD:-warehouse}
+      POSTGRES_DB: ${WAREHOUSE_DB_NAME:-warehouse}
     volumes:
       - warehouse-db-volume:/var/lib/postgresql/data
       - ./docker/warehouse/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -36,8 +40,10 @@ services:
 
   atlas:
     image: sburn/apache-atlas:latest
+    env_file:
+      - .env
     environment:
-      ATLAS_SERVER_OPTS: "-server -Xms1024m -Xmx2048m"
+      ATLAS_SERVER_OPTS: ${ATLAS_SERVER_OPTS:--server -Xms1024m -Xmx2048m}
     ports:
       - "21000:21000"
     depends_on:
@@ -55,37 +61,50 @@ services:
         condition: service_healthy
       warehouse:
         condition: service_healthy
+    env_file:
+      - .env
     environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
-      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
-      AIRFLOW__WEBSERVER__AUTHENTICATE: "False"
-      AIRFLOW__WEBSERVER__RBAC: "False"
-      PYTHONPATH: /opt/airflow:/opt/airflow/src
+      AIRFLOW__CORE__EXECUTOR: ${AIRFLOW__CORE__EXECUTOR:-LocalExecutor}
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: ${AIRFLOW__DATABASE__SQL_ALCHEMY_CONN:-postgresql+psycopg2://airflow:airflow@postgres/airflow}
+      AIRFLOW__CORE__LOAD_EXAMPLES: ${AIRFLOW__CORE__LOAD_EXAMPLES:-false}
+      AIRFLOW__WEBSERVER__AUTHENTICATE: ${AIRFLOW__WEBSERVER__AUTHENTICATE:-False}
+      AIRFLOW__WEBSERVER__RBAC: ${AIRFLOW__WEBSERVER__RBAC:-False}
+      PYTHONPATH: ${PYTHONPATH:-/opt/airflow:/opt/airflow/src}
       # Warehouse database connection
-      WAREHOUSE_DB_HOST: warehouse
-      WAREHOUSE_DB_PORT: 5432
-      WAREHOUSE_DB_NAME: warehouse
-      WAREHOUSE_DB_USER: warehouse
-      WAREHOUSE_DB_PASSWORD: warehouse
+      WAREHOUSE_DB_HOST: ${WAREHOUSE_DB_HOST:-warehouse}
+      WAREHOUSE_DB_PORT: ${WAREHOUSE_DB_PORT:-5432}
+      WAREHOUSE_DB_NAME: ${WAREHOUSE_DB_NAME:-warehouse}
+      WAREHOUSE_DB_USER: ${WAREHOUSE_DB_USER:-warehouse}
+      WAREHOUSE_DB_PASSWORD: ${WAREHOUSE_DB_PASSWORD:-warehouse}
       # Atlas connection
-      ATLAS_URL: http://atlas:21000
-      ATLAS_ENABLED: "true"
+      ATLAS_URL: ${ATLAS_URL:-http://atlas:21000}
+      ATLAS_ENABLED: ${ATLAS_ENABLED:-true}
     volumes:
+      # Mount project root for package installation (setup.py must be accessible)
+      # Note: Not read-only because pip install -e needs to create egg-info
+      - .:/opt/airflow/project
+      # Mount DAGs directory (Airflow looks here by default)
       - ./airflow/dags:/opt/airflow/dags
+      # Mount source code (also available via package after installation)
       - ./src:/opt/airflow/src
-      - ./pipelines_config:/opt/airflow/pipelines_config
-      - ./dbt:/opt/airflow/dbt
+      # Mount configuration and data directories
+      - ./config:/opt/airflow/config
       - ./data:/opt/airflow/data
       - ./schemas:/opt/airflow/schemas
-      - ./config:/opt/airflow/config
       - ./metadata:/opt/airflow/metadata
-      - ./requirements-airflow.txt:/requirements-airflow.txt
+      # Mount requirements and entrypoint
+      - ./requirements/requirements-airflow.txt:/requirements-airflow.txt
       - ./airflow-entrypoint.sh:/entrypoint.sh
       - /var/run/docker.sock:/var/run/docker.sock 
     ports:
       - "8080:8080"
     entrypoint: ["/entrypoint.sh"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
 
 volumes:
   postgres-db-volume:

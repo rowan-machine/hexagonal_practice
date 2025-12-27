@@ -245,7 +245,11 @@ python -m ipykernel install --user --name=hexagonal_practice --display-name "Pyt
 
 ### Start Services
 ```bash
-docker-compose up -d
+# Start services and wait for Airflow to be ready
+make docker-up-wait
+
+# Or start without waiting
+make docker-up
 ```
 
 ### Verify Services Running

@@ -6,7 +6,7 @@ Clean, interface-driven Python data pipelines for stop loss insurance marketplac
 
 > **📚 New to this project?** Start with [GETTING_STARTED.md](GETTING_STARTED.md)  
 > **🚀 Migrating from existing systems?** See [docs/MIGRATION_GUIDE.md](docs/MIGRATION_GUIDE.md) ⭐  
-> **📖 Complete Documentation**: [docs/DOCUMENTATION_INDEX.md](docs/DOCUMENTATION_INDEX.md)
+> **📖 Complete Documentation**: [docs/README.md](docs/README.md) - Documentation index
 
 ## Table of Contents
 
@@ -37,23 +37,24 @@ Clean, interface-driven Python data pipelines for stop loss insurance marketplac
 
 2. **Install dependencies:**
    ```bash
-   pip install -r requirements.txt
-   pip install -r requirements-dev.txt  # For development
+   pip install -r requirements/requirements.txt
+   pip install -r requirements/requirements-dev.txt  # For development
    ```
 
 3. **Verify installation:**
    ```bash
-   python verify_setup.py
+   python scripts/verify_setup.py
    ```
 
 4. **Run a pipeline:**
    ```bash
-   python run_local.py claims_pipeline
+   python scripts/run_local.py claims_pipeline
+   # Or use Makefile: make run-claims
    ```
 
 5. **Verify data:**
    ```bash
-   python verify_data_loaded.py
+   python scripts/verify_data_loaded.py
    ```
 
 ## Architecture Overview
@@ -103,7 +104,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
 
 4. **Verify installation:**
    ```bash
-   python verify_setup.py
+   python scripts/verify_setup.py
    ```
 
 ### Docker Setup
@@ -184,8 +185,12 @@ with db.get_connection() as conn:
 ### Setup
 
 ```bash
-# Start all services
-docker-compose up -d
+# Start all services and wait for Airflow to be ready (recommended)
+make docker-up-wait
+
+# Or start services without waiting
+make docker-up
+make wait-airflow
 
 # Check service status
 docker-compose ps
@@ -203,7 +208,7 @@ docker-compose logs -f
 
 ### Environment Variables
 
-See [DOCKER_SETUP.md](DOCKER_SETUP.md) for environment variable configuration.
+See [docs/ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md) for environment variable configuration.
 
 ## Usage Examples
 
@@ -228,11 +233,11 @@ pipeline:
         type: by_policy
 ```
 
-See [EXAMPLES.md](EXAMPLES.md) for complete examples.
+See [examples/README.md](examples/README.md) for complete examples.
 
 ### SDK Usage
 
-See [EXAMPLES.md](EXAMPLES.md) for SDK usage examples.
+See [examples/README.md](examples/README.md) for SDK usage examples.
 
 ## Notebooks
 
@@ -285,7 +290,7 @@ pytest --cov=src --cov-report=html
 
 ### Writing Tests
 
-See [TESTING.md](TESTING.md) for testing guidelines and examples.
+See [src/tests/TESTING.md](src/tests/TESTING.md) for testing guidelines and examples.
 
 ## Project Structure
 
@@ -426,22 +431,19 @@ Each phase can be implemented independently and validated before proceeding.
 ### v0.0.1 Status
 **Status**: ✅ Production Ready
 
-- **Release Notes**: [RELEASE_NOTES_v0.0.1.md](RELEASE_NOTES_v0.0.1.md)
-- **Code Review**: [CODE_REVIEW_v0.0.1.md](CODE_REVIEW_v0.0.1.md)
-- **Repository Structure**: [REPO_STRUCTURE_v0.0.1.md](REPO_STRUCTURE_v0.0.1.md)
-- **Final Summary**: [v0.0.1_FINAL_SUMMARY.md](v0.0.1_FINAL_SUMMARY.md)
+- **Release Notes**: Archived in [docs/archive/](docs/archive/) for v0.0.1
 - **Changelog**: [CHANGELOG.md](CHANGELOG.md)
 
 ### Quick Verification
 ```bash
 # Verify setup
-python verify_setup.py
+python scripts/verify_setup.py
 
 # Verify data after pipeline run
-python verify_data_loaded.py
+python scripts/verify_data_loaded.py
 
 # Comprehensive verification
-python verify_pipeline_complete.py
+python scripts/verify_pipeline_complete.py
 ```
 
 ## Troubleshooting
@@ -463,8 +465,8 @@ python verify_setup.py
 
 **Missing dependencies:**
 ```bash
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
+pip install -r requirements/requirements.txt
+pip install -r requirements/requirements-dev.txt
 ```
 
 **Notebook import errors:**
@@ -486,14 +488,11 @@ pip install -r requirements-dev.txt
 ## Support
 
 For questions or issues:
-- **Documentation**: See [docs/DOCUMENTATION_INDEX.md](docs/DOCUMENTATION_INDEX.md)
-- **Troubleshooting**: See [DOCKER_TROUBLESHOOTING.md](DOCKER_TROUBLESHOOTING.md) or [docs/ATLAS_TROUBLESHOOTING.md](docs/ATLAS_TROUBLESHOOTING.md)
-- **Verification**: Run `python verify_setup.py` or `python verify_pipeline_complete.py`
+- **Documentation**: See [docs/README.md](docs/README.md) - Complete documentation index
+- **Troubleshooting**: See [DOCKER.md](DOCKER.md) (Docker troubleshooting) or [docs/ATLAS_TROUBLESHOOTING.md](docs/ATLAS_TROUBLESHOOTING.md)
+- **Verification**: Run `python verify_setup.py` or `python scripts/verify_pipeline_complete.py`
 
 ## Release Information
 
-- **Release Notes**: [RELEASE_NOTES_v0.0.1.md](RELEASE_NOTES_v0.0.1.md)
-- **Code Review**: [CODE_REVIEW_v0.0.1.md](CODE_REVIEW_v0.0.1.md)
-- **Repository Structure**: [REPO_STRUCTURE_v0.0.1.md](REPO_STRUCTURE_v0.0.1.md)
-- **Final Summary**: [v0.0.1_FINAL_SUMMARY.md](v0.0.1_FINAL_SUMMARY.md)
-- **Release Checklist**: [v0.0.1_RELEASE_CHECKLIST.md](v0.0.1_RELEASE_CHECKLIST.md)
+- **Changelog**: [CHANGELOG.md](CHANGELOG.md) - Version history and changes
+- **Release Notes**: Archived in [docs/archive/](docs/archive/) for v0.0.1
