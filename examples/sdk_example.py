@@ -89,24 +89,25 @@ def combined_analysis_example():
     # Create combined analyst
     analyst = StopLossAnalyst(approval_threshold=Decimal("100000.00"))
     
-    # Load data from database
-    claims = analyst.claims_analyst.load_from_database(layer="silver")
-    policies = analyst.policies_analyst.load_from_database(layer="silver")
-    
-    if not claims or not policies:
-        print("Missing data. Run pipelines first to load claims and policies.")
-        return
-    
-    # Analyze claims by policy
-    analysis = analyst.analyze_claims_by_policy(claims, policies)
-    print(f"Analysis complete for {len(analysis)} policies")
-    
-    # Calculate coverage utilization
-    utilization = analyst.calculate_coverage_utilization(claims, policies)
+    # Get coverage utilization (loads data internally)
+    utilization = analyst.get_coverage_utilization()
     print(f"Coverage utilization calculated for {len(utilization)} policies")
     
     for util in utilization[:5]:  # Show first 5
-        print(f"Policy {util['policy_id']}: {util['utilization_percent']:.2f}% utilized")
+        policy_id = util.get('policy_id', 'N/A')
+        utilization_pct = util.get('utilization_percent', 0)
+        print(f"Policy {policy_id}: {utilization_pct:.2f}% utilized")
+    
+    # Get claims by policy summary
+    summary = analyst.get_claims_by_policy_summary()
+    print(f"\nClaims by policy summary:")
+    print(f"  Total policies: {summary.get('total_policies', 0)}")
+    print(f"  Total claims: {summary.get('total_claims', 0)}")
+    print(f"  Total claim amount: ${summary.get('total_claim_amount', 0):,.2f}")
+    
+    # Get high utilization policies
+    high_util = analyst.get_high_utilization_policies(threshold_percent=50.0)
+    print(f"\nHigh utilization policies (>50%): {len(high_util)}")
 
 
 if __name__ == "__main__":
