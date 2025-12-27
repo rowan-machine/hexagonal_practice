@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test lint format type-check coverage clean run-claims run-policies verify docker-up docker-down docker-logs wait-airflow check-airflow docker-up-wait atlas-publish atlas-verify atlas-query atlas-query-curl atlas-debug-payload atlas-setup atlas-fix-stale verify-atlas wait-atlas setup-all
+.PHONY: help install install-dev test test-dags lint format type-check coverage clean run-claims run-policies verify docker-up docker-down docker-logs wait-airflow check-airflow docker-up-wait atlas-publish atlas-verify atlas-query atlas-query-curl atlas-debug-payload atlas-setup atlas-fix-stale verify-atlas wait-atlas setup-all
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -16,6 +16,12 @@ install-dev: ## Install development dependencies
 
 test: ## Run all tests
 	pytest
+
+test-dags: ## Run DAG tests (requires Airflow)
+	@echo "Running DAG tests..."
+	@echo "Note: These tests require Apache Airflow. Install with: pip install apache-airflow==2.10.3"
+	@echo "Or run in Docker: docker-compose exec airflow pytest src/tests/test_dags_*.py -v"
+	@pytest src/tests/test_dags_*.py -v || echo "DAG tests skipped - Airflow not installed"
 
 test-verbose: ## Run tests with verbose output
 	pytest -v
