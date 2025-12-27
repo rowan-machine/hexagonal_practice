@@ -71,7 +71,7 @@ def test_documentation_links():
     doc_files = [
         "GETTING_STARTED.md",
         "DOCKER.md",
-        "PIPENV_GUIDE.md",
+        "docs/PIPENV_GUIDE.md",
         "docs/README.md",
         "docs/DESIGN_PRINCIPLES.md",
         "docs/MIGRATION_GUIDE.md",

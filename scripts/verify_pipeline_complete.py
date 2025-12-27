@@ -56,10 +56,11 @@ def main():
     # 1. Verify data is loaded
     print("1. Verifying data is loaded in warehouse...")
     print("-" * 60)
+    script_dir = Path(__file__).parent
     if args.postgres:
-        success, output = run_script("verify_data_loaded.py", "--postgres")
+        success, output = run_script(str(script_dir / "verify_data_loaded.py"), "--postgres")
     else:
-        success, output = run_script("verify_data_loaded.py")
+        success, output = run_script(str(script_dir / "verify_data_loaded.py"))
     
     print(output)
     if not success:
@@ -72,13 +73,14 @@ def main():
     # 2. Verify Atlas entities
     print("2. Verifying Atlas entities are published...")
     print("-" * 60)
-    success, output = run_script("verify_atlas_entities.py")
+    script_dir = Path(__file__).parent
+    success, output = run_script(str(script_dir / "verify_atlas_entities.py"))
     print(output)
     if not success:
         all_passed = False
         print("[FAILED] Atlas verification failed")
         print("\nTo publish Atlas metadata, run:")
-        print("  python publish_atlas_metadata.py")
+        print("  python scripts/publish_atlas_metadata.py")
     else:
         print("[OK] Atlas verification passed")
     print()
