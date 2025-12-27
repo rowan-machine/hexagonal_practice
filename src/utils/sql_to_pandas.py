@@ -496,7 +496,7 @@ class SQLToPandasConverter:
         
         return f"# JOIN {join_type.upper()} {table} ON {condition}"
     
-    def _extract_join_keys(self, condition: exp.Expression) -> Optional[tuple]:
+    def _extract_join_keys(self, condition: Any) -> Optional[tuple]:
         """Extract join keys from condition."""
         if isinstance(condition, exp.EQ):
             left = condition.this
