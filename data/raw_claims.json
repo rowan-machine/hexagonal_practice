@@ -1,0 +1,125 @@
+{
+  "claims": [
+    {
+      "claim_id": "CLM-2024-001",
+      "policy_id": "POL-2024-001",
+      "member_id": "MEM-001",
+      "claim_amount": "125000.00",
+      "incurred_date": "2024-03-15T00:00:00",
+      "paid_date": "2024-04-01T00:00:00",
+      "status": "paid",
+      "claim_type": "medical"
+    },
+    {
+      "claim_id": "CLM-2024-002",
+      "policy_id": "POL-2024-001",
+      "member_id": "MEM-002",
+      "claim_amount": "75000.00",
+      "incurred_date": "2024-04-10T00:00:00",
+      "paid_date": null,
+      "status": "approved",
+      "claim_type": "medical"
+    },
+    {
+      "claim_id": "CLM-2024-003",
+      "policy_id": "POL-2024-001",
+      "member_id": "MEM-003",
+      "claim_amount": "35000.00",
+      "incurred_date": "2024-05-20T00:00:00",
+      "paid_date": null,
+      "status": "pending",
+      "claim_type": "medical"
+    },
+    {
+      "claim_id": "CLM-2024-004",
+      "policy_id": "POL-2024-002",
+      "member_id": "MEM-101",
+      "claim_amount": "95000.00",
+      "incurred_date": "2024-02-20T00:00:00",
+      "paid_date": "2024-03-05T00:00:00",
+      "status": "paid",
+      "claim_type": "medical"
+    },
+    {
+      "claim_id": "CLM-2024-005",
+      "policy_id": "POL-2024-002",
+      "member_id": "MEM-102",
+      "claim_amount": "45000.00",
+      "incurred_date": "2024-06-01T00:00:00",
+      "paid_date": null,
+      "status": "approved",
+      "claim_type": "pharmacy"
+    },
+    {
+      "claim_id": "CLM-2024-006",
+      "policy_id": "POL-2024-002",
+      "member_id": "MEM-103",
+      "claim_amount": "15000.00",
+      "incurred_date": "2024-07-10T00:00:00",
+      "paid_date": null,
+      "status": "pending",
+      "claim_type": "dental"
+    },
+    {
+      "claim_id": "CLM-2024-007",
+      "policy_id": "POL-2024-003",
+      "member_id": "MEM-201",
+      "claim_amount": "200000.00",
+      "incurred_date": "2024-03-01T00:00:00",
+      "paid_date": "2024-03-20T00:00:00",
+      "status": "paid",
+      "claim_type": "medical"
+    },
+    {
+      "claim_id": "CLM-2024-008",
+      "policy_id": "POL-2024-003",
+      "member_id": "MEM-202",
+      "claim_amount": "85000.00",
+      "incurred_date": "2024-04-15T00:00:00",
+      "paid_date": null,
+      "status": "approved",
+      "claim_type": "medical"
+    },
+    {
+      "claim_id": "CLM-2024-009",
+      "policy_id": "POL-2024-003",
+      "member_id": "MEM-203",
+      "claim_amount": "55000.00",
+      "incurred_date": "2024-05-05T00:00:00",
+      "paid_date": null,
+      "status": "pending",
+      "claim_type": "medical"
+    },
+    {
+      "claim_id": "CLM-2024-010",
+      "policy_id": "POL-2024-001",
+      "member_id": "MEM-004",
+      "claim_amount": "25000.00",
+      "incurred_date": "2024-08-01T00:00:00",
+      "paid_date": null,
+      "status": "pending",
+      "claim_type": "vision"
+    },
+    {
+      "claim_id": "CLM-2024-011",
+      "policy_id": "POL-2024-002",
+      "member_id": "MEM-104",
+      "claim_amount": "30000.00",
+      "incurred_date": "2024-08-15T00:00:00",
+      "paid_date": null,
+      "status": "pending",
+      "claim_type": "medical"
+    },
+    {
+      "claim_id": "CLM-2024-012",
+      "policy_id": "POL-2024-003",
+      "member_id": "MEM-204",
+      "claim_amount": "110000.00",
+      "incurred_date": "2024-09-01T00:00:00",
+      "paid_date": null,
+      "status": "approved",
+      "claim_type": "medical"
+    }
+  ]
+}
+

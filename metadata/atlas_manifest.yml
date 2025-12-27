@@ -1,0 +1,160 @@
+# Apache Atlas Metadata Manifest
+#
+# This file documents all entities published to Apache Atlas for data lineage and governance.
+# It serves as a reference for the warehouse schema and ETL processes.
+#
+# Entities are published via src/utils/atlas_payloads.py and src/utils/atlas.py
+
+# =============================================================================
+# DATABASE
+# =============================================================================
+database:
+  name: warehouse
+  qualifiedName: warehouse@postgres
+  type: hive_db
+  owner: data_eng
+  description: "Data warehouse for stop loss insurance data"
+
+# =============================================================================
+# FACT TABLES
+# =============================================================================
+
+fact_policies:
+  name: fact_policies
+  qualifiedName: warehouse.fact_policies@postgres
+  type: hive_table
+  owner: data_eng
+  description: "Row-level, business-truth policies table"
+  columns:
+    - name: policy_id
+      type: string
+      description: "Unique policy identifier"
+    - name: customer
+      type: string
+      description: "Customer/employer identifier"
+    - name: line_of_business
+      type: string
+      description: "Line of business"
+    - name: effective_date
+      type: date
+      description: "Policy effective date"
+    - name: premium_usd
+      type: double
+      description: "Premium amount in USD"
+
+fact_claims:
+  name: fact_claims
+  qualifiedName: warehouse.fact_claims@postgres
+  type: hive_table
+  owner: data_eng
+  description: "Row-level, business-truth claims table"
+  columns:
+    - name: claim_id
+      type: string
+      description: "Unique claim identifier"
+    - name: policy_id
+      type: string
+      description: "Policy identifier (foreign key)"
+    - name: claim_amount_usd
+      type: double
+      description: "Claim amount in USD"
+    - name: status
+      type: string
+      description: "Claim status (pending, approved, denied, paid)"
+    - name: claim_date
+      type: date
+      description: "Date claim was incurred"
+
+# =============================================================================
+# GOLD AGGREGATE TABLES
+# =============================================================================
+
+gold_policies_by_customer:
+  name: gold_policies_by_customer
+  qualifiedName: warehouse.gold_policies_by_customer@postgres
+  type: hive_table
+  owner: data_eng
+  description: "Aggregated policies by customer (gold layer)"
+  columns:
+    - name: customer
+      type: string
+      description: "Customer/employer identifier"
+    - name: premium_usd
+      type: double
+      description: "Total premium for customer"
+
+gold_claims_by_policy:
+  name: gold_claims_by_policy
+  qualifiedName: warehouse.gold_claims_by_policy@postgres
+  type: hive_table
+  owner: data_eng
+  description: "Aggregated claims by policy (gold layer)"
+  columns:
+    - name: policy_id
+      type: string
+      description: "Policy identifier"
+    - name: claim_amount_usd
+      type: double
+      description: "Total claim amount for policy"
+    - name: claim_count
+      type: integer
+      description: "Number of claims for policy"
+
+# =============================================================================
+# ETL PROCESSES
+# =============================================================================
+
+policies_fact_etl:
+  name: policies_fact_etl
+  qualifiedName: policies_fact_etl@airflow
+  type: Process
+  owner: data_eng
+  description: "ETL process for policies fact table"
+  inputs:
+    - raw_policies_json
+  outputs:
+    - warehouse.fact_policies@postgres
+
+policies_aggregates_etl:
+  name: policies_aggregates_etl
+  qualifiedName: policies_aggregates_etl@airflow
+  type: Process
+  owner: data_eng
+  description: "ETL process for policies aggregation (fact -> gold)"
+  inputs:
+    - warehouse.fact_policies@postgres
+  outputs:
+    - warehouse.gold_policies_by_customer@postgres
+
+claims_fact_etl:
+  name: claims_fact_etl
+  qualifiedName: claims_fact_etl@airflow
+  type: Process
+  owner: data_eng
+  description: "ETL process for claims fact table"
+  inputs:
+    - raw_claims_json
+  outputs:
+    - warehouse.fact_claims@postgres
+
+claims_aggregates_etl:
+  name: claims_aggregates_etl
+  qualifiedName: claims_aggregates_etl@airflow
+  type: Process
+  owner: data_eng
+  description: "ETL process for claims aggregation (fact -> gold)"
+  inputs:
+    - warehouse.fact_claims@postgres
+  outputs:
+    - warehouse.gold_claims_by_policy@postgres
+
+# =============================================================================
+# DATA LINEAGE
+# =============================================================================
+#
+# Lineage Flow:
+#
+# raw_policies_json -> policies_fact_etl -> fact_policies -> policies_aggregates_etl -> gold_policies_by_customer
+# raw_claims_json -> claims_fact_etl -> fact_claims -> claims_aggregates_etl -> gold_claims_by_policy
+#
+# All processes are orchestrated by Airflow DAGs.

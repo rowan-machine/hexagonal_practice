@@ -1,0 +1,31 @@
+[project]
+name = "ringmaster-pipelines"
+version = "0.0.1"
+description = "Clean, interface-driven Python data pipelines for stop loss insurance"
+requires-python = ">=3.8"
+dependencies = [
+    "pyyaml>=6.0",
+    "pandas>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "mypy>=1.0.0",
+    "types-python-dateutil>=2.8.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "jupyter>=1.0.0",
+    "ipykernel>=6.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,58 @@
+schema:
+  name: claims
+  version: "1.0"
+  
+  fields:
+    - name: claim_id
+      type: string
+      required: true
+      description: "Unique claim identifier"
+    
+    - name: policy_id
+      type: string
+      required: true
+      description: "Policy identifier"
+    
+    - name: member_id
+      type: string
+      required: true
+      description: "Member identifier"
+    
+    - name: claim_amount
+      type: decimal
+      required: true
+      description: "Claim amount in dollars"
+      validation:
+        min: 0
+    
+    - name: incurred_date
+      type: datetime
+      required: true
+      description: "Date claim was incurred"
+    
+    - name: paid_date
+      type: datetime
+      required: false
+      description: "Date claim was paid"
+    
+    - name: status
+      type: string
+      required: true
+      description: "Claim status"
+      allowed_values:
+        - pending
+        - approved
+        - denied
+        - paid
+    
+    - name: claim_type
+      type: string
+      required: false
+      default: "medical"
+      description: "Type of claim"
+      allowed_values:
+        - medical
+        - pharmacy
+        - dental
+        - vision
+

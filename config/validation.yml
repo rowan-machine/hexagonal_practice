@@ -1,0 +1,26 @@
+# Validation configuration for pipeline data quality checks
+#
+# This file defines validation rules that simulate SQL estate validation.
+# Expected counts can come from:
+# 1. Source JSON files (primary - simulates SQL query results)
+# 2. This configuration file (fallback)
+#
+# When migrating from SQL estate:
+# 1. Run SQL query to get expected counts
+# 2. Update source JSON files with those counts
+# 3. ValidationLoader will read from JSON (simulating SQL)
+# 4. This config serves as fallback if JSON unavailable
+
+policies:
+  # Expected count from SQL estate (fallback if JSON unavailable)
+  # In production, this would be: SELECT COUNT(*) FROM policies_source_table
+  expected_count: 4
+  source_table: "policies_source"  # Original SQL table name
+  validation_type: "count_match"   # Type of validation
+
+claims:
+  # Expected count from SQL estate (fallback if JSON unavailable)
+  # In production, this would be: SELECT COUNT(*) FROM claims_source_table
+  expected_count: 12
+  source_table: "claims_source"    # Original SQL table name
+  validation_type: "count_match"   # Type of validation

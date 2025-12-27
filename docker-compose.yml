@@ -1,0 +1,91 @@
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  warehouse:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: warehouse
+      POSTGRES_PASSWORD: warehouse
+      POSTGRES_DB: warehouse
+    volumes:
+      - warehouse-db-volume:/var/lib/postgresql/data
+      - ./docker/warehouse/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U warehouse"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  atlas:
+    image: sburn/apache-atlas:latest
+    environment:
+      ATLAS_SERVER_OPTS: "-server -Xms1024m -Xmx2048m"
+    ports:
+      - "21000:21000"
+    depends_on:
+      - warehouse
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:21000/api/atlas/admin/version || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  airflow:
+    image: apache/airflow:2.10.3
+    depends_on:
+      postgres:
+        condition: service_healthy
+      warehouse:
+        condition: service_healthy
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__WEBSERVER__AUTHENTICATE: "False"
+      AIRFLOW__WEBSERVER__RBAC: "False"
+      PYTHONPATH: /opt/airflow:/opt/airflow/src
+      # Warehouse database connection
+      WAREHOUSE_DB_HOST: warehouse
+      WAREHOUSE_DB_PORT: 5432
+      WAREHOUSE_DB_NAME: warehouse
+      WAREHOUSE_DB_USER: warehouse
+      WAREHOUSE_DB_PASSWORD: warehouse
+      # Atlas connection
+      ATLAS_URL: http://atlas:21000
+      ATLAS_ENABLED: "true"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./pipelines_config:/opt/airflow/pipelines_config
+      - ./dbt:/opt/airflow/dbt
+      - ./data:/opt/airflow/data
+      - ./schemas:/opt/airflow/schemas
+      - ./config:/opt/airflow/config
+      - ./metadata:/opt/airflow/metadata
+      - ./requirements-airflow.txt:/requirements-airflow.txt
+      - ./airflow-entrypoint.sh:/entrypoint.sh
+      - /var/run/docker.sock:/var/run/docker.sock 
+    ports:
+      - "8080:8080"
+    entrypoint: ["/entrypoint.sh"]
+
+volumes:
+  postgres-db-volume:
+  warehouse-db-volume:

@@ -1,0 +1,45 @@
+{
+  "policies": [
+    {
+      "policy_id": "POL-2024-001",
+      "employer_id": "EMP-ACME-CORP",
+      "effective_date": "2024-01-01T00:00:00",
+      "expiration_date": "2024-12-31T23:59:59",
+      "stop_loss_limit": "2000000.00",
+      "aggregate_deductible": "100000.00",
+      "specific_deductible": "50000.00",
+      "status": "active"
+    },
+    {
+      "policy_id": "POL-2024-002",
+      "employer_id": "EMP-TECH-INC",
+      "effective_date": "2024-01-15T00:00:00",
+      "expiration_date": "2024-12-31T23:59:59",
+      "stop_loss_limit": "1500000.00",
+      "aggregate_deductible": "75000.00",
+      "specific_deductible": "40000.00",
+      "status": "active"
+    },
+    {
+      "policy_id": "POL-2024-003",
+      "employer_id": "EMP-GLOBAL-LTD",
+      "effective_date": "2024-02-01T00:00:00",
+      "expiration_date": "2024-12-31T23:59:59",
+      "stop_loss_limit": "3000000.00",
+      "aggregate_deductible": "150000.00",
+      "specific_deductible": "75000.00",
+      "status": "active"
+    },
+    {
+      "policy_id": "POL-2023-001",
+      "employer_id": "EMP-LEGACY-LLC",
+      "effective_date": "2023-01-01T00:00:00",
+      "expiration_date": "2023-12-31T23:59:59",
+      "stop_loss_limit": "1000000.00",
+      "aggregate_deductible": "50000.00",
+      "specific_deductible": "25000.00",
+      "status": "expired"
+    }
+  ]
+}
+

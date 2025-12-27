@@ -1,0 +1,56 @@
+schema:
+  name: policies
+  version: "1.0"
+  
+  fields:
+    - name: policy_id
+      type: string
+      required: true
+      description: "Unique policy identifier"
+    
+    - name: employer_id
+      type: string
+      required: true
+      description: "Employer identifier"
+    
+    - name: effective_date
+      type: datetime
+      required: true
+      description: "Policy effective date"
+    
+    - name: expiration_date
+      type: datetime
+      required: true
+      description: "Policy expiration date"
+    
+    - name: stop_loss_limit
+      type: decimal
+      required: true
+      description: "Stop loss coverage limit"
+      validation:
+        min: 0
+    
+    - name: aggregate_deductible
+      type: decimal
+      required: true
+      description: "Aggregate deductible amount"
+      validation:
+        min: 0
+    
+    - name: specific_deductible
+      type: decimal
+      required: true
+      description: "Specific deductible amount"
+      validation:
+        min: 0
+    
+    - name: status
+      type: string
+      required: true
+      description: "Policy status"
+      allowed_values:
+        - active
+        - inactive
+        - expired
+        - cancelled
+

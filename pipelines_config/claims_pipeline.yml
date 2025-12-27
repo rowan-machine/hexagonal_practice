@@ -1,0 +1,47 @@
+pipeline:
+  name: claims_pipeline
+  description: "Stop loss insurance claims processing pipeline"
+  
+  steps:
+    - name: claims_bronze
+      type: bronze
+      source:
+        path: "data/raw_claims.json"
+        format: "json"
+      config:
+        basic_cleaning: true
+    
+    - name: claims_silver
+      type: silver
+      domain_handler: ClaimsProcessor
+      config:
+        approval_threshold: 100000.00
+    
+    - name: claims_validation
+      type: validation
+      data_key: silver_data
+      config:
+        rules:
+          - name: claim_amount_positive
+            severity: error
+          - name: claim_has_policy
+            severity: error
+          - name: claim_has_member
+            severity: error
+    
+    - name: claims_gold
+      type: gold
+      aggregation:
+        type: by_policy
+        group_by:
+          - policy_id
+        aggregations:
+          claim_amount: sum
+          claim_id: count
+  
+  execution:
+    stop_on_error: true
+    skip_completed: false
+    enable_metrics: true
+    enable_logging: true
+
