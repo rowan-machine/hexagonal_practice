@@ -357,9 +357,17 @@ See `docs/MIGRATION_GUIDE.md` for phased, incremental implementation guide.
 - **Benefits**: Flexibility, extensibility, reduced coupling, duck typing support
 
 **2. Data Classes & Dataclasses** (Chapter 5)
-- **Implementation**: Enhanced use of `@dataclass` and `dataclasses.field()`
-- **Business Reason**: Reduces boilerplate code, improves code readability, and provides built-in validation. Makes domain models cleaner and easier to maintain. Reduces errors from manual `__init__` methods.
-- **Benefits**: Code clarity, maintainability, less boilerplate, built-in validation
+- **Current Usage**: Already implemented in domain models (`Claim`, `Policy`), mixins (`ValidationRule`, `Metric`), and pipeline context objects
+- **Future Enhancements**: 
+  - Expand dataclass usage to all domain models and DTOs
+  - Use `dataclasses.field()` with `default_factory` for mutable defaults
+  - Implement `frozen=True` for immutable domain objects
+  - Add `__post_init__` for validation and computed properties
+  - Use `dataclasses.asdict()` and `dataclasses.replace()` for transformations
+  - Leverage `dataclasses.field(compare=False)` for non-comparable fields
+  - Implement dataclass-based configuration objects
+- **Business Reason**: Reduces boilerplate code, improves code readability, and provides built-in validation. Makes domain models cleaner and easier to maintain. Reduces errors from manual `__init__` methods. Immutable dataclasses prevent accidental mutations in concurrent environments.
+- **Benefits**: Code clarity, maintainability, less boilerplate, built-in validation, immutability support, better serialization
 
 **3. Context Managers** (Chapter 15)
 - **Implementation**: Enhanced resource management with `contextlib`
