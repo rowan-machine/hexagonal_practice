@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test test-dags lint format type-check coverage clean run-claims run-policies verify docker-up docker-down docker-logs wait-airflow check-airflow docker-up-wait atlas-publish atlas-verify atlas-query atlas-query-curl atlas-debug-payload atlas-setup atlas-fix-stale verify-atlas wait-atlas setup-all
+.PHONY: help install install-dev test test-dags test-dags-docker lint format type-check coverage clean run-claims run-policies verify docker-up docker-down docker-logs wait-airflow check-airflow docker-up-wait atlas-publish atlas-verify atlas-query atlas-query-curl atlas-debug-payload atlas-setup atlas-fix-stale verify-atlas wait-atlas setup-all
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
