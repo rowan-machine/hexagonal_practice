@@ -142,18 +142,8 @@ class AtlasClient(LoggingMixin):
                 self.log_info(f"Atlas metadata published successfully", entity_count=published_count)
             else:
                 self.log_warning("No entities were published to Atlas")
-            
-            # Log response details for debugging
-            if response.status_code != 200:
-                self.log_warning(
-                    f"Atlas returned non-200 status",
-                    status_code=response.status_code,
-                    response_text=response.text[:200]
-                )
-            
-            response.raise_for_status()
-            
-            self.log_info("Atlas metadata published successfully", entity_count=entity_count)
+                # If nothing was published, don't try to access response
+                return
         except requests.exceptions.RequestException as e:
             # Don't fail the pipeline if Atlas publish fails - just log warning
             status_code = None

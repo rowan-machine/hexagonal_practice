@@ -214,7 +214,8 @@ class PoliciesPipeline(BasePipeline, LoggingMixin, MetricsMixin):
         from src.utils.atlas import AtlasClient
         from src.utils.atlas_payloads import build_policies_table_payload, build_policies_aggregates_payload
         
-        atlas_url = os.getenv("ATLAS_URL", "http://atlas:21000")
+        # Default to localhost for local development, atlas hostname for Docker
+        atlas_url = os.getenv("ATLAS_URL", "http://localhost:21000")
         atlas_enabled = os.getenv("ATLAS_ENABLED", "true").lower() == "true"
         
         if not atlas_enabled:
