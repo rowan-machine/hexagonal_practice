@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test lint format type-check coverage clean run-claims run-policies verify docker-up docker-down docker-logs wait-airflow check-airflow docker-up-wait atlas-publish atlas-verify atlas-query atlas-query-curl atlas-debug-payload atlas-setup verify-atlas wait-atlas setup-all
+.PHONY: help install install-dev test lint format type-check coverage clean run-claims run-policies verify docker-up docker-down docker-logs wait-airflow check-airflow docker-up-wait atlas-publish atlas-verify atlas-query atlas-query-curl atlas-debug-payload atlas-setup atlas-fix-stale verify-atlas wait-atlas setup-all
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -82,6 +82,10 @@ atlas-setup: atlas-publish atlas-verify atlas-query ## Publish, verify, and quer
 	@echo ""
 	@echo "Atlas setup complete! View entities at http://localhost:21000"
 	@echo "Login: admin/admin"
+
+atlas-fix-stale: ## Fix stale Atlas entity GUID errors
+	@echo "Fixing stale Atlas entities..."
+	@python scripts/fix_atlas_stale_entities.py
 
 verify-atlas: atlas-verify ## Alias for atlas-verify (backward compatibility)
 

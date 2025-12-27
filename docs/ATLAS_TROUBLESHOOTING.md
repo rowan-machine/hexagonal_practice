@@ -101,6 +101,53 @@ python scripts/publish_atlas_metadata.py --atlas-url http://localhost:21000
    docker-compose logs atlas | grep -i "entity\|error"
    ```
 
+## Issue: "Invalid/Not Found" GUID Error in Atlas UI
+
+**Error**: `Given instance guid ca68cccf-bc75-4c0b-a6de-522414e0779e is invalid/not found`
+
+**Problem**: Browser or Atlas has cached a reference to an entity that was deleted or recreated.
+
+**Solutions**:
+
+1. **Quick Fix (Recommended)**:
+   ```bash
+   # Fix stale entities automatically
+   make atlas-fix-stale
+   
+   # Or manually:
+   python scripts/fix_atlas_stale_entities.py
+   ```
+   This will:
+   - Delete all warehouse-related entities
+   - Re-publish them with fresh GUIDs
+   - Clear stale references
+
+2. **Clear Browser Cache**:
+   - Press `Ctrl+Shift+Delete` (Windows/Linux) or `Cmd+Shift+Delete` (Mac)
+   - Clear cached images and files
+   - Refresh Atlas UI
+
+3. **Restart Atlas** (if error persists):
+   ```bash
+   docker-compose restart atlas
+   # Wait 30 seconds, then:
+   make atlas-fix-stale
+   ```
+
+4. **Manual Fix**:
+   ```bash
+   # Clear only (don't re-publish)
+   python scripts/fix_atlas_stale_entities.py --clear-only
+   
+   # Re-publish only (don't clear first)
+   python scripts/fix_atlas_stale_entities.py --republish-only
+   ```
+
+**Prevention**: 
+- Always use `make atlas-fix-stale` after restarting Atlas
+- Clear browser cache if you see GUID errors
+- Re-publish entities if you modify the schema
+
 ## Issue: Default Entities Clutter the View
 
 **Problem**: Atlas shows many default entities that aren't relevant.
