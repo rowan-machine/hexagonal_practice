@@ -34,10 +34,7 @@ test-sql-converter: ## Run SQL to Pandas converter tests
 	@pytest src/tests/test_sql_to_pandas.py -v
 
 sql-to-pandas: ## Convert SQL file to pandas (usage: make sql-to-pandas SQL_FILE=path/to/file.sql TABLE=table_name)
-	@if [ -z "$(SQL_FILE)" ]; then \
-		echo "Usage: make sql-to-pandas SQL_FILE=path/to/file.sql TABLE=table_name"; \
-		exit 1; \
-	fi
+	@python -c "import sys; sys.exit(0 if '$(SQL_FILE)' else 1)" || (echo "Usage: make sql-to-pandas SQL_FILE=path/to/file.sql TABLE=table_name" && exit 1)
 	@python scripts/sql_to_pandas_cli.py $(SQL_FILE) --table $(TABLE) || echo "Note: Install sqlglot and pandas: pip install sqlglot pandas"
 
 test-verbose: ## Run tests with verbose output
@@ -61,15 +58,8 @@ coverage: ## Generate coverage report
 	pytest --cov=src --cov-report=html --cov-report=term
 	@echo "Coverage report generated in htmlcov/index.html"
 
-clean: ## Clean generated files
-	find . -type d -name __pycache__ -exec rm -r {} + 2>/dev/null || true
-	find . -type f -name "*.pyc" -delete
-	find . -type f -name "*.pyo" -delete
-	find . -type d -name "*.egg-info" -exec rm -r {} + 2>/dev/null || true
-	find . -type d -name ".pytest_cache" -exec rm -r {} + 2>/dev/null || true
-	find . -type d -name ".mypy_cache" -exec rm -r {} + 2>/dev/null || true
-	find . -type d -name ".ruff_cache" -exec rm -r {} + 2>/dev/null || true
-	rm -rf build/ dist/ htmlcov/ .coverage coverage.xml
+clean: ## Clean generated files - cross-platform
+	@python -c "import os, shutil, glob; [shutil.rmtree(d, ignore_errors=True) for d in glob.glob('**/__pycache__', recursive=True)] + [os.remove(f) for f in glob.glob('**/*.pyc', recursive=True)] + [os.remove(f) for f in glob.glob('**/*.pyo', recursive=True)] + [shutil.rmtree(d, ignore_errors=True) for d in glob.glob('**/*.egg-info', recursive=True)] + [shutil.rmtree(d, ignore_errors=True) for d in ['.pytest_cache', '.mypy_cache', '.ruff_cache', 'build', 'dist', 'htmlcov']] + [os.remove(f) for f in ['.coverage', 'coverage.xml'] if os.path.exists(f)]"
 
 run-claims: ## Run claims pipeline
 	python scripts/run_local.py claims_pipeline
@@ -178,13 +168,9 @@ pre-commit: ## Run pre-commit hooks on all files
 
 ci: install-dev lint type-check test ## Run CI checks locally
 
-setup-branches: ## Setup git branches (develop, test, main)
+setup-branches: ## Setup git branches (develop, test, main) - cross-platform
 	@echo "Setting up Git branches..."
-ifeq ($(OS),Windows_NT)
-	@powershell -ExecutionPolicy Bypass -File scripts/setup_git_branches.ps1
-else
-	@bash -c 'if [ -f scripts/setup_git_branches.sh ]; then bash scripts/setup_git_branches.sh; else echo "Creating branches manually..."; git checkout -b develop 2>/dev/null || git checkout develop; git checkout -b test 2>/dev/null || git checkout test; git checkout main 2>/dev/null || git checkout main; echo "Branches created. Push with: git push -u origin develop test"; fi'
-endif
+	@python scripts/setup_git_branches.py
 
 test-release: verify-release ## Test release readiness
 
