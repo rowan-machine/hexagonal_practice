@@ -129,7 +129,7 @@ wait-airflow: ## Wait for Airflow webserver to be ready
 	@python scripts/wait_for_airflow.py
 
 check-airflow: ## Check if Airflow webserver is ready (quick check)
-	@python scripts/wait_for_airflow.py --max-wait 5 --quiet && echo "✓ Airflow is ready at http://localhost:8080" || echo "✗ Airflow is not ready yet"
+	@python scripts/wait_for_airflow.py --max-wait 5 --quiet && echo "[OK] Airflow is ready at http://localhost:8080" || echo "[ERROR] Airflow is not ready yet"
 
 docker-up-wait: docker-up wait-airflow ## Start Docker services and wait for Airflow
 
