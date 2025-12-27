@@ -72,7 +72,7 @@ def policies_analysis_example():
     if policies:
         employer_id = policies[0].employer_id
         employer_policies = analyst.get_employer_policies(policies, employer_id=employer_id)
-        print(f"Policies for employer {employer_id}: {len(employer_policies)}")
+        print(f"Policies for selected employer: {len(employer_policies)}")
     
     # Get total coverage
     total_coverage = analyst.get_total_coverage(policies)
