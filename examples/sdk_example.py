@@ -23,8 +23,12 @@ def claims_analysis_example():
     # Create analyst instance
     analyst = ClaimsAnalyst(approval_threshold=Decimal("100000.00"))
     
-    # Load claims from file
-    claims = analyst.load_claims("data/raw_claims.json", file_format="json")
+    # Load claims from database (primary method)
+    claims = analyst.load_from_database(layer="silver")
+    
+    if not claims:
+        print("No claims found in database. Run pipelines first to load data.")
+        return
     
     # Get total claims
     total = analyst.get_total_claims(claims)
@@ -45,9 +49,6 @@ def claims_analysis_example():
     # Convert to DataFrame for analysis
     df = analyst.to_dataframe(claims)
     print(f"DataFrame shape: {df.shape if hasattr(df, 'shape') else 'N/A'}")
-    
-    # Save processed claims
-    analyst.save_claims(claims, "data/processed_claims.json")
 
 
 def policies_analysis_example():
@@ -56,16 +57,22 @@ def policies_analysis_example():
     # Create analyst instance
     analyst = PoliciesAnalyst()
     
-    # Load policies from file
-    policies = analyst.load_policies("data/raw_policies.json", file_format="json")
+    # Load policies from database (primary method)
+    policies = analyst.load_from_database(layer="silver")
+    
+    if not policies:
+        print("No policies found in database. Run pipelines first to load data.")
+        return
     
     # Get active policies
     active = analyst.get_active_policies(policies)
     print(f"Active policies: {len(active)}")
     
-    # Get policies for specific employer
-    employer_policies = analyst.get_employer_policies(policies, employer_id="EMP001")
-    print(f"Policies for employer EMP001: {len(employer_policies)}")
+    # Get policies for specific employer (if any policies exist)
+    if policies:
+        employer_id = policies[0].employer_id
+        employer_policies = analyst.get_employer_policies(policies, employer_id=employer_id)
+        print(f"Policies for employer {employer_id}: {len(employer_policies)}")
     
     # Get total coverage
     total_coverage = analyst.get_total_coverage(policies)
@@ -82,9 +89,13 @@ def combined_analysis_example():
     # Create combined analyst
     analyst = StopLossAnalyst(approval_threshold=Decimal("100000.00"))
     
-    # Load data
-    claims = analyst.claims_analyst.load_claims("data/raw_claims.json")
-    policies = analyst.policies_analyst.load_policies("data/raw_policies.json")
+    # Load data from database
+    claims = analyst.claims_analyst.load_from_database(layer="silver")
+    policies = analyst.policies_analyst.load_from_database(layer="silver")
+    
+    if not claims or not policies:
+        print("Missing data. Run pipelines first to load claims and policies.")
+        return
     
     # Analyze claims by policy
     analysis = analyst.analyze_claims_by_policy(claims, policies)
